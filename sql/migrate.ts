@@ -1,4 +1,9 @@
-import "dotenv/config";
+import { config } from "dotenv";
+
+// npm run db:migrate          → usa .env (desarrollo)
+// npm run db:migrate -- --prod → usa .env.production
+const isProd = process.argv.includes("--prod");
+config({ path: isProd ? ".env.production" : ".env", override: true });
 import { readFileSync } from "fs";
 import { join } from "path";
 import { Pool } from "pg";

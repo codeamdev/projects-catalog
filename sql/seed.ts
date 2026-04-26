@@ -1,4 +1,6 @@
-import "dotenv/config";
+import { config } from "dotenv";
+const isProd = process.argv.includes("--prod");
+config({ path: isProd ? ".env.production" : ".env", override: true });
 import { Pool } from "pg";
 import bcrypt from "bcryptjs";
 
