@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  allowedDevOrigins: [
+    "perfumeria.allexclusive.com",
+    "ropa.allexclusive.com",
+  ],
 };
 
 export default nextConfig;

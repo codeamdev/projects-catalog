@@ -1,65 +1,131 @@
-import Image from "next/image";
+import Link from "next/link";
+import type { Metadata } from "next";
+import { getCurrentTenant } from "@/lib/tenant";
+import { getProducts, getCategories } from "@/lib/products";
+import { withTenantDb } from "@/db";
+import { settings } from "@/db/tenant-schema";
+import { HeroBanner } from "@/components/catalog/HeroBanner";
+import { ProductGrid } from "@/components/catalog/ProductGrid";
+import { CartButton } from "@/components/cart/CartButton";
+import { CartDrawer } from "@/components/cart/CartDrawer";
 
-export default function Home() {
+export async function generateMetadata(): Promise<Metadata> {
+  const tenant = await getCurrentTenant();
+  if (!tenant) return { title: "Catálogo" };
+
+  const [s] = await withTenantDb(tenant.schemaName, (db) =>
+    db.select({ metaTitle: settings.metaTitle, metaDescription: settings.metaDescription })
+      .from(settings).limit(1)
+  );
+  return {
+    title: s?.metaTitle || tenant.name,
+    description: s?.metaDescription || undefined,
+  };
+}
+
+const VIDEO_RE = /\.(mp4|webm|ogg)(\?.*)?$/i;
+
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ categoria?: string }>;
+}) {
+  const tenant = await getCurrentTenant();
+
+  if (!tenant) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
+        <div className="text-center">
+          <p className="text-5xl mb-4">🏪</p>
+          <h1 className="text-2xl font-bold text-white mb-2">Sistema de Catálogos</h1>
+          <p className="text-gray-400 text-sm">Accedé desde el subdominio de tu catálogo.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const { categoria } = await searchParams;
+
+  const [[s], allProducts, categoryList] = await Promise.all([
+    withTenantDb(tenant.schemaName, (db) => db.select().from(settings).limit(1)),
+    getProducts(tenant.schemaName),
+    getCategories(tenant.schemaName),
+  ]);
+
+  // ── Hero: video o carrusel de imágenes ──────────────────────
+  const heroImageUrl = s?.heroImageUrl ?? null;
+  const isVideo = !!heroImageUrl && VIDEO_RE.test(heroImageUrl);
+
+  // Carrusel: heroImage + hasta 5 imágenes de productos destacados
+  const heroImages: string[] = isVideo
+    ? []
+    : [
+        ...(heroImageUrl ? [heroImageUrl] : []),
+        ...allProducts
+          .filter((p) => p.featured && p.active !== false && p.images[0]?.url)
+          .slice(0, 5)
+          .map((p) => p.images[0].url),
+      ].slice(0, 6);
+
+  // ── Productos del grid (filtrados por categoría) ─────────────
+  const gridProducts = categoria
+    ? allProducts.filter((p) => p.category?.slug === categoria && p.active !== false)
+    : allProducts.filter((p) => p.active !== false);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div
+      className="min-h-screen bg-white"
+      style={{ "--primary": tenant.primaryColor } as React.CSSProperties}
+    >
+      {/* Navbar flotante y transparente sobre el hero */}
+      <header className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 sm:px-6 h-14">
+        <Link href="/">
+          {tenant.logoUrl ? (
+            <img src={tenant.logoUrl} alt={tenant.name} className="h-8 w-auto object-contain drop-shadow-md" />
+          ) : (
+            <span className="text-base font-bold text-white drop-shadow-md tracking-tight">
+              {tenant.name}
+            </span>
+          )}
+        </Link>
+      </header>
+
+      <main>
+        <HeroBanner
+          title={s?.heroTitle || tenant.name}
+          subtitle={s?.heroSubtitle}
+          images={heroImages}
+          videoUrl={isVideo ? heroImageUrl : null}
+          primaryColor={tenant.primaryColor ?? "#111827"}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+
+        <section className="py-6 sm:py-8">
+          <ProductGrid
+            products={gridProducts}
+            categories={categoryList}
+            activeCategory={categoria}
+            whatsapp={tenant.whatsappNumber}
+          />
+        </section>
+      </main>
+
+      <footer className="mt-10 border-t border-gray-100 bg-gray-50 py-10">
+        <div className="max-w-screen-xl mx-auto px-4 text-center">
+          <p className="font-bold text-gray-900 mb-1">{tenant.name}</p>
+          <p className="text-gray-400 text-sm">
+            © {new Date().getFullYear()} {tenant.name}. Todos los derechos reservados.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      </footer>
+
+      <CartButton />
+      <CartDrawer
+        tenantName={tenant.name}
+        tenantSubdomain={tenant.subdomain}
+        whatsappNumber={tenant.whatsappNumber}
+        discountCode={s?.discountCode ?? null}
+        discountCodePercent={s?.discountCodePercent ?? null}
+      />
     </div>
   );
 }
