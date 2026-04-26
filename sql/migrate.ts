@@ -1,9 +1,11 @@
 import { config } from "dotenv";
 
-// npm run db:migrate          → usa .env (desarrollo)
-// npm run db:migrate -- --prod → usa .env.production
-const isProd = process.argv.includes("--prod");
-config({ path: isProd ? ".env.production" : ".env", override: true });
+// En Vercel DATABASE_URL ya está en process.env — no cargar archivo
+// Localmente: --prod carga .env.production, sin flag carga .env
+if (!process.env.DATABASE_URL) {
+  const isProd = process.argv.includes("--prod");
+  config({ path: isProd ? ".env.production" : ".env" });
+}
 import { readFileSync } from "fs";
 import { join } from "path";
 import { Pool } from "pg";

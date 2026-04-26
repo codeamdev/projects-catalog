@@ -1,6 +1,8 @@
 import { config } from "dotenv";
-const isProd = process.argv.includes("--prod");
-config({ path: isProd ? ".env.production" : ".env", override: true });
+if (!process.env.DATABASE_URL) {
+  const isProd = process.argv.includes("--prod");
+  config({ path: isProd ? ".env.production" : ".env" });
+}
 import { Pool } from "pg";
 import bcrypt from "bcryptjs";
 

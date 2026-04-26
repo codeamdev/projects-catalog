@@ -7,6 +7,7 @@ import { adminUsers } from "@/db/tenant-schema";
 import { getTenantBySubdomain } from "./tenant";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: true, // permite que Auth.js use el host real de la request (subdominios, Vercel)
   providers: [
     Credentials({
       credentials: {
