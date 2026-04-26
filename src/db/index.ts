@@ -4,11 +4,19 @@ import * as tenantSchema from "./tenant-schema";
 import * as publicSchema from "./public-schema";
 
 const connectionString = process.env.DATABASE_URL!;
+const ssl = connectionString?.includes("supabase.com") ? { rejectUnauthorized: false } : undefined;
 
-// Singleton del pool para reutilizar entre requests en Next.js
+// En Vercel serverless cada instancia es efímera — pool pequeño para no agotar
+// los límites de conexión de Supabase (free tier: ~60 conexiones totales)
 const globalForPg = global as typeof global & { _pool?: Pool };
 if (!globalForPg._pool) {
-  globalForPg._pool = new Pool({ connectionString, max: 10 });
+  globalForPg._pool = new Pool({
+    connectionString,
+    ssl,
+    max: 3,
+    idleTimeoutMillis: 10_000,
+    connectionTimeoutMillis: 5_000,
+  });
 }
 const pool = globalForPg._pool;
 

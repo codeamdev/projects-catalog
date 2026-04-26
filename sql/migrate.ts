@@ -10,7 +10,9 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { Pool } from "pg";
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const connectionString = process.env.DATABASE_URL!;
+const ssl = connectionString?.includes("supabase.com") ? { rejectUnauthorized: false } : undefined;
+const pool = new Pool({ connectionString, ssl });
 const TENANT_SCHEMAS = ["perfumeria", "ropa"];
 
 async function migrate() {
