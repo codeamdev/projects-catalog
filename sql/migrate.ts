@@ -1,10 +1,8 @@
 import { config } from "dotenv";
 
-// En Vercel DATABASE_URL ya está en process.env — no cargar archivo
-// Localmente: --prod carga .env.production, sin flag carga .env
+// Carga .env si DATABASE_URL no está en el entorno (Vercel ya la inyecta)
 if (!process.env.DATABASE_URL) {
-  const isProd = process.argv.includes("--prod");
-  config({ path: isProd ? ".env.production" : ".env" });
+  config({ path: ".env" });
 }
 import { readFileSync } from "fs";
 import { join } from "path";
