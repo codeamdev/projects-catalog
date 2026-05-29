@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { toggleTenantActive } from "@/app/api/superadmin/actions";
 import type { TenantRow } from "@/app/api/superadmin/actions";
 
 interface Props {
@@ -10,16 +11,26 @@ interface Props {
   updateAction: (formData: FormData) => Promise<void>;
 }
 
+function toDateInput(d: Date | null): string {
+  if (!d) return "";
+  const dt = new Date(d);
+  const y = dt.getUTCFullYear();
+  const m = String(dt.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(dt.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 export function TenantEditForm({ tenant, updateAction }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [togglePending, startToggle] = useTransition();
+  const [active, setActive] = useState(tenant.active);
   const [error, setError] = useState("");
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     const formData = new FormData(e.currentTarget);
-
     startTransition(async () => {
       try {
         await updateAction(formData);
@@ -31,8 +42,96 @@ export function TenantEditForm({ tenant, updateAction }: Props) {
     });
   }
 
+  function handleToggle() {
+    startToggle(async () => {
+      const result = await toggleTenantActive(tenant.id);
+      if (result.ok) {
+        setActive((v) => !v);
+        toast.success(active ? "Tenant desactivado." : "Tenant activado.");
+      } else {
+        toast.error(result.error);
+      }
+    });
+  }
+
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-2xl border divide-y max-w-2xl">
+
+      {/* ── Estado ── */}
+      <section className="px-6 py-5 space-y-3">
+        <h2 className="font-semibold text-gray-900 text-sm uppercase tracking-wide">Estado</h2>
+        <div className="flex items-center justify-between p-4 rounded-xl border border-gray-100 bg-gray-50">
+          <div>
+            <p className="text-sm font-medium text-gray-900">
+              Catálogo {active ? "activo" : "inactivo"}
+            </p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              {active
+                ? "El catálogo y el panel admin están accesibles."
+                : "El catálogo y el panel admin muestran página de suspensión."}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleToggle}
+            disabled={togglePending}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none disabled:opacity-60 ${
+              active ? "bg-green-500" : "bg-gray-300"
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                active ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </button>
+        </div>
+      </section>
+
+      {/* ── Plan / fechas de publicación ── */}
+      <section className="px-6 py-5 space-y-4">
+        <div>
+          <h2 className="font-semibold text-gray-900 text-sm uppercase tracking-wide">Plan</h2>
+          <p className="text-xs text-gray-400 mt-0.5">
+            Dejá vacío para no aplicar restricción de fechas.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Inicio de publicación</label>
+            <input
+              name="published_from"
+              type="date"
+              defaultValue={toDateInput(tenant.publishedFrom)}
+              className="w-full border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Fin de publicación</label>
+            <input
+              name="published_until"
+              type="date"
+              defaultValue={toDateInput(tenant.publishedUntil)}
+              className="w-full border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
+            />
+            {tenant.publishedUntil && (
+              <p className={`text-xs mt-1 ${
+                new Date(tenant.publishedUntil) < new Date()
+                  ? "text-red-500"
+                  : new Date(tenant.publishedUntil) < new Date(Date.now() + 30 * 86400000)
+                  ? "text-amber-500"
+                  : "text-gray-400"
+              }`}>
+                {new Date(tenant.publishedUntil) < new Date()
+                  ? "Vencido"
+                  : `Vence ${new Date(tenant.publishedUntil).toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" })}`}
+              </p>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Configuración ── */}
       <section className="px-6 py-5 space-y-4">
         <h2 className="font-semibold text-gray-900 text-sm uppercase tracking-wide">Configuración</h2>
 
@@ -73,7 +172,6 @@ export function TenantEditForm({ tenant, updateAction }: Props) {
               <span className="text-xs text-gray-400">Botones y acentos</span>
             </div>
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp</label>
             <input

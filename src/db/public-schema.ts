@@ -14,6 +14,8 @@ export const tenants = catalogoPublic.table("tenants", {
   primaryColor: text("primary_color").default("#1a1a1a").notNull(),
   whatsappNumber: text("whatsapp_number"),
   logoUrl: text("logo_url"),
+  publishedFrom:  timestamp("published_from",  { withTimezone: true }),
+  publishedUntil: timestamp("published_until", { withTimezone: true }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

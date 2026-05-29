@@ -34,27 +34,36 @@ export default async function TenantsPage() {
               <tr className="bg-gray-50 border-b">
                 <th className="text-left px-6 py-3 font-medium text-gray-500">Nombre</th>
                 <th className="text-left px-6 py-3 font-medium text-gray-500 hidden sm:table-cell">Subdominio</th>
-                <th className="text-left px-6 py-3 font-medium text-gray-500 hidden md:table-cell">Color</th>
+                <th className="text-left px-6 py-3 font-medium text-gray-500 hidden lg:table-cell">Vencimiento</th>
                 <th className="text-left px-6 py-3 font-medium text-gray-500">Estado</th>
                 <th className="px-6 py-3" />
               </tr>
             </thead>
             <tbody className="divide-y">
-              {tenantList.map((t) => (
+              {tenantList.map((t) => {
+                const now = new Date();
+                const until = t.publishedUntil ? new Date(t.publishedUntil) : null;
+                const expired = until ? until < now : false;
+                const expiringSoon = until && !expired ? until < new Date(Date.now() + 30 * 86400000) : false;
+                return (
                 <tr key={t.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4">
                     <p className="font-medium text-gray-900">{t.name}</p>
                     <p className="text-xs text-gray-400 sm:hidden">{t.subdomain}</p>
                   </td>
                   <td className="px-6 py-4 hidden sm:table-cell text-gray-600">{t.subdomain}</td>
-                  <td className="px-6 py-4 hidden md:table-cell">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="w-5 h-5 rounded-full border border-gray-200"
-                        style={{ background: t.primaryColor }}
-                      />
-                      <span className="text-gray-500 font-mono text-xs">{t.primaryColor}</span>
-                    </div>
+                  <td className="px-6 py-4 hidden lg:table-cell">
+                    {until ? (
+                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                        expired        ? "bg-red-100 text-red-700" :
+                        expiringSoon   ? "bg-amber-100 text-amber-700" :
+                                         "bg-gray-100 text-gray-600"
+                      }`}>
+                        {expired ? "Vencido" : until.toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" })}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-300">Sin límite</span>
+                    )}
                   </td>
                   <td className="px-6 py-4">
                     <ToggleTenantButton
@@ -72,7 +81,8 @@ export default async function TenantsPage() {
                     </Link>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         )}

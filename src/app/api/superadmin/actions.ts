@@ -32,6 +32,8 @@ export type TenantRow = {
   primaryColor: string;
   whatsappNumber: string | null;
   logoUrl: string | null;
+  publishedFrom:  Date | null;
+  publishedUntil: Date | null;
   createdAt: Date;
 };
 
@@ -86,6 +88,8 @@ const UpdateSchema = z.object({
   primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Color inválido"),
   whatsappNumber: z.string().optional(),
   logoUrl: z.string().url("URL inválida").optional().or(z.literal("")),
+  publishedFrom:  z.string().optional(),
+  publishedUntil: z.string().optional(),
 });
 
 // ── Acciones ──────────────────────────────────────────────────────
@@ -171,6 +175,8 @@ export async function updateTenant(
       primaryColor: formData.get("primaryColor") as string,
       whatsappNumber: (formData.get("whatsappNumber") as string)?.trim() || undefined,
       logoUrl: (formData.get("logoUrl") as string)?.trim() || undefined,
+      publishedFrom:  (formData.get("published_from")  as string)?.trim() || undefined,
+      publishedUntil: (formData.get("published_until") as string)?.trim() || undefined,
     };
 
     const parsed = UpdateSchema.safeParse(raw);
@@ -179,7 +185,7 @@ export async function updateTenant(
       return { ok: false, error: msg };
     }
 
-    const { name, primaryColor, whatsappNumber, logoUrl } = parsed.data;
+    const { name, primaryColor, whatsappNumber, logoUrl, publishedFrom, publishedUntil } = parsed.data;
 
     await publicDb
       .update(tenants)
@@ -188,6 +194,8 @@ export async function updateTenant(
         primaryColor,
         whatsappNumber: whatsappNumber ?? null,
         logoUrl: logoUrl || null,
+        publishedFrom:  publishedFrom  && !isNaN(Date.parse(publishedFrom))  ? new Date(publishedFrom)  : null,
+        publishedUntil: publishedUntil && !isNaN(Date.parse(publishedUntil)) ? new Date(publishedUntil) : null,
         updatedAt: new Date(),
       })
       .where(eq(tenants.id, id));
