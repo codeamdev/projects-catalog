@@ -107,14 +107,26 @@ npm run dev
 
 ### Variables de entorno (.env)
 
-```env
-DATABASE_URL="postgresql://usuario:contraseña@localhost:5432/project_catalogo"
-NEXTAUTH_URL="http://perfumeria.allexclusive.com:3000"
-NEXTAUTH_SECRET="secreto-aleatorio-largo"
-NEXT_PUBLIC_ROOT_DOMAIN="allexclusive.com"
+Copia `.env.example` a `.env` y completa los valores:
+
+```bash
+cp .env.example .env
 ```
 
-Generar NEXTAUTH_SECRET: `openssl rand -base64 32`
+| Variable | Descripción |
+|----------|-------------|
+| `DATABASE_URL` | Cadena de conexión PostgreSQL |
+| `NEXTAUTH_URL` | URL base de la app (sin trailing slash) |
+| `NEXTAUTH_SECRET` | Secreto JWT — **debe ser único por entorno** |
+| `NEXT_PUBLIC_ROOT_DOMAIN` | Dominio raíz de los subdominios |
+
+**Generar `NEXTAUTH_SECRET` seguro (requerido antes del primer arranque):**
+
+```bash
+openssl rand -base64 32
+```
+
+Pega el resultado como valor de `NEXTAUTH_SECRET` en tu `.env`. Nunca uses un valor de ejemplo ni reutilices el secreto entre entornos (dev / staging / producción).
 
 ### Subdominios en desarrollo
 
@@ -324,8 +336,8 @@ Correo: juan@ejemplo.com
 
 Endpoint `POST /api/upload` — requiere sesión autenticada.
 
-- Formatos aceptados: JPEG, PNG, WebP, GIF, AVIF, SVG
-- Tamaño máximo: 5 MB por imagen
+- Formatos aceptados: JPEG, PNG, WebP, GIF, AVIF
+- Tamaño máximo: 10 MB por imagen
 - Almacenamiento local: `public/uploads/[schema]/`
 - Respuesta: `{ url: "/uploads/[schema]/archivo.ext" }`
 

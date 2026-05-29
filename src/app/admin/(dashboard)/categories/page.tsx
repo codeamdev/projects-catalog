@@ -34,7 +34,7 @@ export default async function CategoriesPage() {
           />
           <button
             type="submit"
-            className="bg-gray-900 text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-700 transition-colors whitespace-nowrap"
+            className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors whitespace-nowrap"
           >
             Crear
           </button>

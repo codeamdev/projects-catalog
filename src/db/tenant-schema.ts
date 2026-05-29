@@ -10,6 +10,7 @@ import {
   timestamp,
   index,
   smallint,
+  unique,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -36,6 +37,8 @@ export const products = pgTable(
     featured: boolean("featured").default(false).notNull(),
     discountPercent: smallint("discount_percent"),
     tags: text("tags").array().default([]).notNull(),
+    stock: integer("stock"),
+    trackStock: boolean("track_stock").default(false).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
@@ -96,16 +99,25 @@ export const orders = pgTable(
 
 export const settings = pgTable("settings", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  // singleton garantiza exactamente una fila por tenant (constraint unique en DB)
+  singleton: boolean("singleton").default(true).notNull(),
   heroTitle: text("hero_title").default("Bienvenidos").notNull(),
   heroSubtitle: text("hero_subtitle"),
   heroImageUrl: text("hero_image_url"),
+  heroImageUrlMobile: text("hero_image_url_mobile"),
+  heroVideoUrlMobile: text("hero_video_url_mobile"),
+  heroImagePosition: text("hero_image_position").default("center").notNull(),
+  categoriesStyle: text("categories_style").default("stories").notNull(),
   metaTitle: text("meta_title"),
   metaDescription: text("meta_description"),
   footerText: text("footer_text"),
   discountCode: text("discount_code"),
   discountCodePercent: smallint("discount_code_percent"),
+  inventoryEnabled: boolean("inventory_enabled").default(false).notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (t) => [
+  unique("settings_singleton_unique").on(t.singleton),
+]);
 
 // ── Relaciones ────────────────────────────────────────────────
 export const productsRelations = relations(products, ({ one, many }) => ({

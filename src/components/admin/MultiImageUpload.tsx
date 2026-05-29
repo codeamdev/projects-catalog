@@ -7,9 +7,10 @@ interface Props {
   /** Nombre del campo oculto (URLs separadas por \n) */
   name: string;
   defaultValue?: string | null;
+  label?: string;
 }
 
-export function MultiImageUpload({ name, defaultValue = "" }: Props) {
+export function MultiImageUpload({ name, defaultValue = "", label = "Imágenes del producto" }: Props) {
   const [urls, setUrls] = useState<string[]>(
     (defaultValue ?? "").split("\n").map((u) => u.trim()).filter(Boolean)
   );
@@ -51,7 +52,7 @@ export function MultiImageUpload({ name, defaultValue = "" }: Props) {
   return (
     <div className="space-y-3">
       <label className="block text-sm font-medium text-gray-700">
-        Imágenes del producto
+        {label}
       </label>
 
       {/* Input oculto con todas las URLs */}

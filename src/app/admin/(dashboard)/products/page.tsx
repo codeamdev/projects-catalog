@@ -58,13 +58,13 @@ export default async function AdminProductsPage({
         </div>
         <Link
           href="/admin/products/new"
-          className="bg-gray-900 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-gray-700 transition-colors"
+          className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors"
         >
           + Nuevo producto
         </Link>
       </div>
 
-      <div className="bg-white rounded-2xl border overflow-hidden">
+      <div className="bg-white rounded-2xl border overflow-x-auto">
         {rows.length === 0 ? (
           <p className="text-center text-gray-400 py-16">No hay productos aún.</p>
         ) : (

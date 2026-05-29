@@ -1,3 +1,4 @@
+import "@/lib/env"; // valida vars de entorno requeridas al inicio
 import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import { Pool, PoolClient } from "pg";
 import * as tenantSchema from "./tenant-schema";
@@ -13,9 +14,16 @@ if (!globalForPg._pool) {
   globalForPg._pool = new Pool({
     connectionString,
     ssl,
-    max: 3,
-    idleTimeoutMillis: 10_000,
-    connectionTimeoutMillis: 5_000,
+    // Una sola página puede necesitar 4-5 conexiones simultáneas:
+    // generateMetadata + Home ambos llaman publicDb, más 3 withTenantDb en parallel.
+    // Con max:3 la 4ª conexión espera y vence el timeout.
+    max: 10,
+    idleTimeoutMillis: 20_000,
+    connectionTimeoutMillis: 8_000,
+    // keepAlive evita "Connection terminated unexpectedly" cuando Supabase/PgBouncer
+    // cierra conexiones idle del lado del servidor sin que el pool local lo sepa.
+    keepAlive: true,
+    keepAliveInitialDelayMillis: 0,
   });
 }
 const pool = globalForPg._pool;

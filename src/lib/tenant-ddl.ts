@@ -98,6 +98,30 @@ UPDATE :schema.orders SET status = 'accepted' WHERE status = 'confirmed';`,
   // 006_add_discount_code
   `ALTER TABLE :schema.settings ADD COLUMN IF NOT EXISTS discount_code TEXT;
 ALTER TABLE :schema.settings ADD COLUMN IF NOT EXISTS discount_code_percent SMALLINT;`,
+
+  // 007_super_admins — no aplica a schemas de tenant, pero se corre igual de forma inocua
+  `SELECT 1;`,
+
+  // 008_inventory
+  `ALTER TABLE :schema.products ADD COLUMN IF NOT EXISTS stock INT;
+ALTER TABLE :schema.products ADD COLUMN IF NOT EXISTS track_stock BOOLEAN DEFAULT FALSE NOT NULL;
+ALTER TABLE :schema.settings ADD COLUMN IF NOT EXISTS inventory_enabled BOOLEAN DEFAULT FALSE NOT NULL;`,
+
+  // 009_hero_image_position
+  `ALTER TABLE :schema.settings ADD COLUMN IF NOT EXISTS hero_image_position TEXT DEFAULT 'center' NOT NULL;`,
+
+  // 010_categories_style
+  `ALTER TABLE :schema.settings ADD COLUMN IF NOT EXISTS categories_style TEXT DEFAULT 'stories' NOT NULL;`,
+
+  // 011_settings_singleton
+  // Garantiza exactamente una fila en settings por tenant.
+  // CREATE UNIQUE INDEX IF NOT EXISTS es idempotente (seguro re-correr).
+  `ALTER TABLE :schema.settings ADD COLUMN IF NOT EXISTS singleton BOOLEAN DEFAULT TRUE NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS settings_singleton_unique ON :schema.settings (singleton);`,
+
+  // 012_hero_mobile_media
+  `ALTER TABLE :schema.settings ADD COLUMN IF NOT EXISTS hero_image_url_mobile TEXT;
+ALTER TABLE :schema.settings ADD COLUMN IF NOT EXISTS hero_video_url_mobile TEXT;`,
 ];
 
 export async function createTenantSchema(client: PoolClient, schemaName: string): Promise<void> {

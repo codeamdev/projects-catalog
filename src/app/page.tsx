@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getCurrentTenant } from "@/lib/tenant";
 import { getProducts, getCategories } from "@/lib/products";
@@ -25,7 +26,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 const VIDEO_RE = /\.(mp4|webm|ogg)(\?.*)?$/i;
 
-function isValidHttpUrl(value: string): boolean {
+function isValidUrl(value: string): boolean {
+  if (value.startsWith("/")) return true; // ruta relativa — servida por este servidor
   try {
     const u = new URL(value);
     return u.protocol === "http:" || u.protocol === "https:";
@@ -41,17 +43,7 @@ export default async function Home({
 }) {
   const tenant = await getCurrentTenant();
 
-  if (!tenant) {
-    return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
-        <div className="text-center">
-          <p className="text-5xl mb-4">🏪</p>
-          <h1 className="text-2xl font-bold text-white mb-2">Sistema de Catálogos</h1>
-          <p className="text-gray-400 text-sm">Accedé desde el subdominio de tu catálogo.</p>
-        </div>
-      </div>
-    );
-  }
+  if (!tenant) redirect("/superadmin/login");
 
   const { categoria } = await searchParams;
 
@@ -61,23 +53,38 @@ export default async function Home({
     getCategories(tenant.schemaName),
   ]);
 
-  // ── Hero: video o carrusel de imágenes ──────────────────────
+  // ── Hero desktop: video o carrusel de imágenes ──────────────
   const heroImageUrl = s?.heroImageUrl ?? null;
-  const isVideo = !!heroImageUrl && VIDEO_RE.test(heroImageUrl);
+  const firstHeroUrl = heroImageUrl?.split("\n")[0]?.trim() ?? null;
+  const isVideo = !!firstHeroUrl && VIDEO_RE.test(firstHeroUrl);
 
-  // Carrusel: heroImage + hasta 5 imágenes de productos destacados
-  // isValidHttpUrl filtra textos de atribución u otros valores no-URL que puedan
-  // estar guardados accidentalmente en hero_image_url.
+  const explicitUrls = isVideo
+    ? []
+    : (heroImageUrl ?? "")
+        .split("\n")
+        .map((u) => u.trim())
+        .filter((u) => u && isValidUrl(u) && !VIDEO_RE.test(u));
+
+  const featuredFallback = allProducts
+    .filter((p) => p.featured && p.active !== false && p.images[0]?.url)
+    .slice(0, 6)
+    .map((p) => p.images[0].url)
+    .filter((u) => isValidUrl(u) && !VIDEO_RE.test(u));
+
   const heroImages: string[] = isVideo
     ? []
-    : [
-        ...(heroImageUrl && isValidHttpUrl(heroImageUrl) ? [heroImageUrl] : []),
-        ...allProducts
-          .filter((p) => p.featured && p.active !== false && p.images[0]?.url)
-          .slice(0, 5)
-          .map((p) => p.images[0].url)
-          .filter(isValidHttpUrl),
-      ].slice(0, 6);
+    : explicitUrls.length > 0
+    ? explicitUrls.slice(0, 6)
+    : featuredFallback;
+
+  // ── Hero móvil: video o imágenes verticales ──────────────────
+  const mobileVideoUrl = s?.heroVideoUrlMobile?.trim() || null;
+  const mobileImageRaw = s?.heroImageUrlMobile ?? "";
+  const mobileImages: string[] = mobileImageRaw
+    .split("\n")
+    .map((u) => u.trim())
+    .filter((u) => u && isValidUrl(u) && !VIDEO_RE.test(u))
+    .slice(0, 6);
 
   // ── Productos del grid (filtrados por categoría) ─────────────
   const gridProducts = categoria
@@ -100,6 +107,12 @@ export default async function Home({
             </span>
           )}
         </Link>
+        <Link
+          href="/admin/login"
+          className="text-xs text-white/70 hover:text-white transition-colors drop-shadow"
+        >
+          Ingresar
+        </Link>
       </header>
 
       <main>
@@ -107,8 +120,11 @@ export default async function Home({
           title={s?.heroTitle || tenant.name}
           subtitle={s?.heroSubtitle}
           images={heroImages}
-          videoUrl={isVideo ? heroImageUrl : null}
+          imagesMobile={mobileImages}
+          videoUrl={isVideo ? firstHeroUrl : null}
+          videoUrlMobile={mobileVideoUrl}
           primaryColor={tenant.primaryColor ?? "#111827"}
+          imagePosition={(s?.heroImagePosition as "top" | "center" | "bottom") ?? "center"}
         />
 
         <section className="py-6 sm:py-8">
@@ -117,6 +133,7 @@ export default async function Home({
             categories={categoryList}
             activeCategory={categoria}
             whatsapp={tenant.whatsappNumber}
+            categoriesStyle={(s?.categoriesStyle as import("@/components/catalog/ProductGrid").CatStyle) ?? "stories"}
           />
         </section>
       </main>

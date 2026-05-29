@@ -1,0 +1,34 @@
+services:
+  app:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_ROOT_DOMAIN: ${NEXT_PUBLIC_ROOT_DOMAIN}
+    image: catalogo-app:latest
+    container_name: catalogo-app
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"   # solo localhost — Nginx hace de proxy público
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      NEXTAUTH_URL: ${NEXTAUTH_URL}
+      NEXT_PUBLIC_ROOT_DOMAIN: ${NEXT_PUBLIC_ROOT_DOMAIN}
+      NODE_ENV: production
+    volumes:
+      - uploads:/app/public/uploads   # videos e imágenes subidas
+    network_mode: host                # necesario para conectar a PostgreSQL local
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  uploads:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /srv/catalogo/uploads   # ruta en el host — sobrevive al contenedor

@@ -32,9 +32,21 @@ export function proxy(request: NextRequest) {
   if (hasRealSubdomain) {
     const subdomain = sanitizeTenant(rawSubdomain);
     if (!subdomain) return NextResponse.next();
+
+    // Un tenant no tiene acceso al panel superadmin → redirigir a su propio admin
+    const path = request.nextUrl.pathname;
+    if (path.startsWith("/superadmin")) {
+      return NextResponse.redirect(new URL("/admin", request.url));
+    }
+
     const res = NextResponse.next();
     res.headers.set("x-tenant-subdomain", subdomain);
     return res;
+  }
+
+  // Sin subdominio: dominio raíz → /admin/* no tiene sentido, redirigir al superadmin
+  if (request.nextUrl.pathname.startsWith("/admin")) {
+    return NextResponse.redirect(new URL("/superadmin/login", request.url));
   }
 
   // ── Ruta 2: fallback solo en desarrollo ───────────────────────

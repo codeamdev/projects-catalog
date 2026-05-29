@@ -8,7 +8,7 @@ const VIDEO_MAX = 200 * 1024 * 1024; // 200 MB
 
 const ALLOWED_IMAGES = new Set([
   "image/jpeg", "image/png", "image/webp",
-  "image/gif", "image/avif", "image/svg+xml",
+  "image/gif", "image/avif",
 ]);
 const ALLOWED_VIDEOS = new Set([
   "video/mp4", "video/webm", "video/ogg", "video/quicktime",
@@ -20,7 +20,6 @@ const EXT_MAP: Record<string, string> = {
   "image/webp": "webp",
   "image/gif": "gif",
   "image/avif": "avif",
-  "image/svg+xml": "svg",
   "video/mp4": "mp4",
   "video/webm": "webm",
   "video/ogg": "ogv",
@@ -48,7 +47,7 @@ export async function POST(request: NextRequest) {
 
   if (!isImage && !isVideo) {
     return NextResponse.json(
-      { error: "Tipo no permitido. Se aceptan imágenes (JPG, PNG, WebP, GIF, AVIF) y videos (MP4, WebM)." },
+      { error: "Tipo no permitido. Se aceptan imágenes (JPG, PNG, WebP, GIF, AVIF) y videos (MP4, WebM, OGG, MOV)." },
       { status: 400 }
     );
   }

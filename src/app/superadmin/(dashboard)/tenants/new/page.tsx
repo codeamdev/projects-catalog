@@ -131,10 +131,13 @@ export default function NewTenantPage() {
                 name="adminPassword"
                 type="password"
                 required
-                minLength={8}
-                placeholder="Mínimo 8 caracteres"
+                minLength={10}
+                pattern="^(?=.*[A-Z])(?=.*[0-9]).{10,}$"
+                title="Mínimo 10 caracteres, al menos una mayúscula y un número"
+                placeholder="Mínimo 10 caracteres"
                 className="w-full border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
               />
+              <p className="text-xs text-gray-400 mt-1">Mínimo 10 caracteres, una mayúscula y un número</p>
             </div>
           </div>
         </section>

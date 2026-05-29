@@ -42,6 +42,8 @@ export default async function EditProductPage({
           discountPercent: product.discountPercent,
           tags: product.tags.join(", "),
           imageUrls: images.map((i) => i.url).join("\n"),
+          trackStock: product.trackStock,
+          stock: product.stock,
         }}
       />
     </div>

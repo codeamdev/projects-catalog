@@ -62,7 +62,7 @@ export function LoginForm({ subdomain }: Props) {
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-gray-900 text-white py-2.5 rounded-xl font-medium text-sm hover:bg-gray-700 disabled:opacity-60 transition-colors flex items-center justify-center gap-2"
+        className="w-full bg-indigo-600 text-white py-2.5 rounded-xl font-medium text-sm hover:bg-indigo-700 disabled:opacity-60 transition-colors flex items-center justify-center gap-2"
       >
         {loading ? (
           <>

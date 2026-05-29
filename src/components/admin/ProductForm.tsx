@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition, useRef } from "react";
+import { useTransition, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { MultiImageUpload } from "./MultiImageUpload";
@@ -18,6 +18,8 @@ interface DefaultValues {
   discountPercent?: number | null;
   tags?: string;
   imageUrls?: string;
+  trackStock?: boolean;
+  stock?: number | null;
 }
 
 interface Props {
@@ -31,6 +33,7 @@ const INPUT = "w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focu
 
 export function ProductForm({ categories, action, deleteAction, defaultValues }: Props) {
   const [isPending, startTransition] = useTransition();
+  const [trackStock, setTrackStock] = useState(defaultValues?.trackStock ?? false);
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -39,10 +42,12 @@ export function ProductForm({ categories, action, deleteAction, defaultValues }:
     const formData = new FormData(e.currentTarget);
     startTransition(async () => {
       const result = await action(formData);
-      if (!result.ok) {
+      if (result.ok) {
+        toast.success("Producto guardado");
+        router.push("/admin/products");
+      } else {
         toast.error(result.error);
       }
-      // Si ok=true, el servidor hace redirect — no necesitamos hacer nada aquí
     });
   }
 
@@ -137,7 +142,7 @@ export function ProductForm({ categories, action, deleteAction, defaultValues }:
       </div>
 
       {/* Flags */}
-      <div className="flex gap-6">
+      <div className="flex gap-6 flex-wrap">
         <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
           <input type="hidden" name="active" value="false" />
           <input
@@ -160,7 +165,39 @@ export function ProductForm({ categories, action, deleteAction, defaultValues }:
           />
           <span>Destacado</span>
         </label>
+        <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+          <input type="hidden" name="track_stock" value="false" />
+          <input
+            type="checkbox"
+            name="track_stock"
+            value="true"
+            checked={trackStock}
+            onChange={(e) => setTrackStock(e.target.checked)}
+            className="w-4 h-4 rounded accent-gray-900"
+          />
+          <span>Mostrar existencias</span>
+        </label>
       </div>
+
+      {/* Stock — solo visible si "Mostrar existencias" está activo */}
+      {trackStock && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Existencias disponibles
+          </label>
+          <input
+            name="stock"
+            type="number"
+            min={0}
+            defaultValue={defaultValues?.stock ?? ""}
+            placeholder="Cantidad en stock"
+            className={`${INPUT} max-w-[160px]`}
+          />
+          <p className="text-xs text-gray-400 mt-1">
+            ≤ 5 unidades → badge "Últimas X". En 0 → "Sin stock" y botón deshabilitado.
+          </p>
+        </div>
+      )}
 
       {/* Acciones */}
       <div className="flex items-center justify-between pt-2 border-t border-gray-100">
@@ -168,7 +205,7 @@ export function ProductForm({ categories, action, deleteAction, defaultValues }:
           <button
             type="submit"
             disabled={isPending}
-            className="bg-gray-900 text-white px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-700 disabled:opacity-50 transition-colors"
+            className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors"
           >
             {isPending ? "Guardando…" : "Guardar producto"}
           </button>

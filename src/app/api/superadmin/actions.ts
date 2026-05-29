@@ -74,7 +74,11 @@ const CreateSchema = z.object({
   whatsappNumber: z.string().optional(),
   logoUrl: z.string().url("URL inválida").optional().or(z.literal("")),
   adminEmail: z.string().email("Email inválido"),
-  adminPassword: z.string().min(8, "Mínimo 8 caracteres"),
+  adminPassword: z
+    .string()
+    .min(10, "Mínimo 10 caracteres")
+    .regex(/[A-Z]/, "Debe contener al menos una mayúscula")
+    .regex(/[0-9]/, "Debe contener al menos un número"),
 });
 
 const UpdateSchema = z.object({
@@ -142,7 +146,7 @@ export async function createTenant(
       );
 
       await client.query(
-        `INSERT INTO settings (hero_title) VALUES ($1) ON CONFLICT DO NOTHING`,
+        `INSERT INTO settings (hero_title, singleton) VALUES ($1, TRUE) ON CONFLICT (singleton) DO NOTHING`,
         [tenantName]
       );
     });

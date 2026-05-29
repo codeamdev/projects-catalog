@@ -25,7 +25,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         };
 
         const tenant = await getTenantBySubdomain(subdomain);
-        if (!tenant) return null;
+        if (!tenant) {
+          console.warn("[auth/admin] tenant no encontrado para subdominio:", subdomain);
+          return null;
+        }
 
         const user = await withTenantDb(tenant.schemaName, (db) =>
           db
@@ -36,8 +39,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             .then((r) => r[0] ?? null)
         );
 
-        if (!user) return null;
-        if (!(await bcrypt.compare(password, user.password))) return null;
+        if (!user) {
+          console.warn("[auth/admin] usuario no encontrado:", email, "en schema:", tenant.schemaName);
+          return null;
+        }
+
+        const ok = await bcrypt.compare(password, user.password);
+        if (!ok) {
+          console.warn("[auth/admin] contraseña incorrecta para:", email);
+          return null;
+        }
 
         return {
           id: user.id,
@@ -71,8 +82,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           .limit(1)
           .then((r) => r[0] ?? null);
 
-        if (!admin) return null;
-        if (!(await bcrypt.compare(password, admin.password))) return null;
+        if (!admin) {
+          console.warn("[auth/superadmin] usuario no encontrado:", email);
+          return null;
+        }
+
+        const ok = await bcrypt.compare(password, admin.password);
+        if (!ok) {
+          console.warn("[auth/superadmin] contraseña incorrecta para:", email);
+          return null;
+        }
 
         return {
           id: admin.id,
@@ -106,7 +125,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
   pages: { signIn: "/admin/login" },
-  session: { strategy: "jwt" },
+  session: {
+    strategy: "jwt",
+    maxAge: 60 * 60,      // token expira 60 min después del último uso
+    updateAge: 5 * 60,    // se renueva si quedan menos de 5 min (sesión deslizante)
+  },
 });
 
 declare module "next-auth" {

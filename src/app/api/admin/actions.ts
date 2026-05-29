@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
@@ -84,6 +83,8 @@ const ProductInput = z.object({
   discountPercent: z.number().int().min(0).max(99).nullable(),
   tags: z.string().optional(),
   imageUrls: z.string().optional(),
+  trackStock: z.boolean().default(false),
+  stock: z.number().int().min(0).nullable(),
 });
 
 export async function createProduct(formData: FormData): Promise<ActionResult> {
@@ -91,6 +92,7 @@ export async function createProduct(formData: FormData): Promise<ActionResult> {
     const session = await requireRole("EDITOR");
     const schema = session.user.schemaName;
 
+    const rawStock = formData.get("stock") as string | null;
     const parsed = ProductInput.parse({
       title: formData.get("title"),
       description: formData.get("description") || undefined,
@@ -104,6 +106,8 @@ export async function createProduct(formData: FormData): Promise<ActionResult> {
         : null,
       tags: formData.get("tags") || undefined,
       imageUrls: formData.get("imageUrls") || undefined,
+      trackStock: formData.getAll("track_stock").includes("true"),
+      stock: rawStock !== null && rawStock !== "" ? parseInt(rawStock, 10) : null,
     });
 
     const slug = toSlug(parsed.title);
@@ -124,6 +128,8 @@ export async function createProduct(formData: FormData): Promise<ActionResult> {
           featured: parsed.featured,
           discountPercent: parsed.discountPercent,
           tags: tagArray,
+          trackStock: parsed.trackStock,
+          stock: parsed.stock,
         })
         .returning({ id: products.id });
 
@@ -136,13 +142,13 @@ export async function createProduct(formData: FormData): Promise<ActionResult> {
 
     revalidatePath("/admin/products");
     revalidatePath("/");
+    return { ok: true, data: undefined };
   } catch (err) {
     if (err instanceof z.ZodError) {
       return { ok: false, error: "Datos del formulario inválidos" };
     }
     return { ok: false, error: err instanceof Error ? err.message : "Error al crear producto" };
   }
-  redirect("/admin/products");
 }
 
 export async function updateProduct(productId: string, formData: FormData): Promise<ActionResult> {
@@ -150,6 +156,7 @@ export async function updateProduct(productId: string, formData: FormData): Prom
     const session = await requireRole("EDITOR");
     const schema = session.user.schemaName;
 
+    const rawStock2 = formData.get("stock") as string | null;
     const parsed = ProductInput.parse({
       title: formData.get("title"),
       description: formData.get("description") || undefined,
@@ -163,6 +170,8 @@ export async function updateProduct(productId: string, formData: FormData): Prom
         : null,
       tags: formData.get("tags") || undefined,
       imageUrls: formData.get("imageUrls") || undefined,
+      trackStock: formData.getAll("track_stock").includes("true"),
+      stock: rawStock2 !== null && rawStock2 !== "" ? parseInt(rawStock2, 10) : null,
     });
 
     const tagArray = parsed.tags?.split(",").map((t) => t.trim()).filter(Boolean) ?? [];
@@ -181,6 +190,8 @@ export async function updateProduct(productId: string, formData: FormData): Prom
           featured: parsed.featured,
           discountPercent: parsed.discountPercent,
           tags: tagArray,
+          trackStock: parsed.trackStock,
+          stock: parsed.stock,
           updatedAt: new Date(),
         })
         .where(eq(products.id, productId));
@@ -196,13 +207,13 @@ export async function updateProduct(productId: string, formData: FormData): Prom
 
     revalidatePath("/admin/products");
     revalidatePath("/");
+    return { ok: true, data: undefined };
   } catch (err) {
     if (err instanceof z.ZodError) {
       return { ok: false, error: "Datos del formulario inválidos" };
     }
     return { ok: false, error: err instanceof Error ? err.message : "Error al actualizar producto" };
   }
-  redirect("/admin/products");
 }
 
 export async function deleteProduct(productId: string): Promise<ActionResult> {
@@ -280,39 +291,89 @@ export async function updateSettings(formData: FormData): Promise<ActionResult> 
     const session = await requireRole("ADMIN");
     const schema = session.user.schemaName;
 
-    const rawDiscountCode = (formData.get("discount_code") as string)?.trim() || null;
-    const rawDiscountPercent = formData.get("discount_code_percent") as string;
-    const discountCodePercent = rawDiscountCode && rawDiscountPercent
-      ? Math.min(99, Math.max(1, parseInt(rawDiscountPercent, 10))) || null
-      : null;
+    const rawPosition = (formData.get("hero_image_position") as string) || "center";
+    const heroImagePosition = (["top", "center", "bottom"] as const).includes(rawPosition as "top" | "center" | "bottom")
+      ? (rawPosition as "top" | "center" | "bottom")
+      : "center";
+
+    const VALID_STYLES = ["stories","pills","chips","tabs","bubbles","minimal","bold","grid","outline","compact"] as const;
+    type CatStyle = typeof VALID_STYLES[number];
+    const rawStyle = (formData.get("categories_style") as string) || "stories";
+    const categoriesStyle: CatStyle = (VALID_STYLES as readonly string[]).includes(rawStyle) ? rawStyle as CatStyle : "stories";
 
     const values = {
       heroTitle: (formData.get("hero_title") as string) || "Bienvenidos",
       heroSubtitle: (formData.get("hero_subtitle") as string) || null,
       heroImageUrl: (formData.get("hero_image_url") as string) || null,
+      heroImageUrlMobile: (formData.get("hero_image_url_mobile") as string) || null,
+      heroVideoUrlMobile: (formData.get("hero_video_url_mobile") as string) || null,
+      heroImagePosition,
+      categoriesStyle,
       metaTitle: (formData.get("meta_title") as string) || null,
       metaDescription: (formData.get("meta_description") as string) || null,
       footerText: (formData.get("footer_text") as string) || null,
-      discountCode: rawDiscountCode,
-      discountCodePercent,
       updatedAt: new Date(),
     };
 
-    await withTenantDb(schema, async (db) => {
-      const existing = await db.select({ id: settings.id }).from(settings).limit(1);
-      if (existing[0]) {
-        await db.update(settings).set(values).where(eq(settings.id, existing[0].id));
-      } else {
-        await db.insert(settings).values(values);
-      }
-    });
+    await withTenantDb(schema, (db) =>
+      db.insert(settings)
+        .values({ singleton: true, ...values })
+        .onConflictDoUpdate({ target: settings.singleton, set: values })
+    );
 
     revalidatePath("/");
     revalidatePath("/admin/settings");
+    return { ok: true, data: undefined };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Error al guardar ajustes" };
   }
-  redirect("/admin/settings?guardado=contenido");
+}
+
+export async function updateDiscountCode(formData: FormData): Promise<ActionResult> {
+  try {
+    const session = await requireRole("ADMIN");
+    const schema = session.user.schemaName;
+
+    const rawCode = (formData.get("discount_code") as string)?.trim() || null;
+    const rawPercent = formData.get("discount_code_percent") as string;
+    const discountCodePercent = rawCode && rawPercent
+      ? Math.min(99, Math.max(1, parseInt(rawPercent, 10))) || null
+      : null;
+
+    const discountValues = { discountCode: rawCode, discountCodePercent, updatedAt: new Date() };
+    await withTenantDb(schema, (db) =>
+      db.insert(settings)
+        .values({ singleton: true, ...discountValues })
+        .onConflictDoUpdate({ target: settings.singleton, set: discountValues })
+    );
+
+    revalidatePath("/");
+    revalidatePath("/admin/settings");
+    return { ok: true, data: undefined };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Error al guardar código de descuento" };
+  }
+}
+
+export async function updateCategoriesStyle(formData: FormData): Promise<ActionResult> {
+  try {
+    const session = await requireRole("ADMIN");
+    const schema = session.user.schemaName;
+    const VALID = ["stories","pills","chips","tabs","bubbles","minimal","bold","grid","outline","compact"];
+    const raw = (formData.get("categories_style") as string) || "stories";
+    const categoriesStyle = VALID.includes(raw) ? raw : "stories";
+    const styleValues = { categoriesStyle, updatedAt: new Date() };
+    await withTenantDb(schema, (db) =>
+      db.insert(settings)
+        .values({ singleton: true, ...styleValues })
+        .onConflictDoUpdate({ target: settings.singleton, set: styleValues })
+    );
+    revalidatePath("/");
+    revalidatePath("/admin/settings");
+    return { ok: true, data: undefined };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Error al guardar estilo" };
+  }
 }
 
 // ── Configuración del tenant (WhatsApp, color, logo) ─────────────
@@ -334,10 +395,10 @@ export async function updateTenantConfig(formData: FormData): Promise<ActionResu
 
     revalidatePath("/");
     revalidatePath("/admin/settings");
+    return { ok: true, data: undefined };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Error al guardar configuración" };
   }
-  redirect("/admin/settings?guardado=tenant");
 }
 
 // ── Admin user (seed/setup) ───────────────────────────────────────

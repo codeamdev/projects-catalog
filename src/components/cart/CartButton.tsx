@@ -17,7 +17,7 @@ export function CartButton() {
     <button
       onClick={openCart}
       aria-label="Abrir carrito"
-      className="fixed bottom-6 right-4 sm:right-6 z-40 flex items-center gap-2 bg-gray-900 text-white rounded-full shadow-2xl px-4 py-3 hover:bg-gray-700 active:scale-95 transition-all"
+      className="fixed bottom-6 right-4 sm:right-6 z-40 flex items-center gap-2 bg-[var(--primary)] text-white rounded-full shadow-2xl px-4 py-3 hover:opacity-90 active:scale-95 transition-all"
     >
       <ShoppingBag className="w-5 h-5 flex-shrink-0" />
       <span className="text-sm font-semibold hidden sm:block">Carrito</span>
