@@ -4,6 +4,9 @@ import {
   products,
   categories,
   productImages,
+  filterGroups,
+  filterOptions,
+  productFilters,
   type ProductWithRelations,
   type Category,
 } from "@/db/tenant-schema";
@@ -61,4 +64,26 @@ export async function getCategories(schemaName: string): Promise<Category[]> {
   return withTenantDb(schemaName, (db) =>
     db.select().from(categories).orderBy(categories.order, categories.name)
   );
+}
+
+export type FilterOptionItem = { id: string; name: string; slug: string; order: number };
+export type FilterGroupWithOptions = { id: string; name: string; slug: string; order: number; options: FilterOptionItem[] };
+
+export async function getFilterGroups(schemaName: string): Promise<FilterGroupWithOptions[]> {
+  return withTenantDb(schemaName, async (db) => {
+    const groups = await db.select().from(filterGroups).orderBy(filterGroups.order, filterGroups.name);
+    const opts = await db.select().from(filterOptions).orderBy(filterOptions.order, filterOptions.name);
+    return groups.map((g) => ({ ...g, options: opts.filter((o) => o.groupId === g.id) }));
+  });
+}
+
+// productId → array of option IDs assigned to that product
+export async function getProductFilterMap(schemaName: string): Promise<Record<string, string[]>> {
+  const rows = await withTenantDb(schemaName, (db) => db.select().from(productFilters));
+  const map: Record<string, string[]> = {};
+  for (const row of rows) {
+    if (!map[row.productId]) map[row.productId] = [];
+    map[row.productId].push(row.optionId);
+  }
+  return map;
 }

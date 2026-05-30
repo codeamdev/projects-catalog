@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getCurrentTenant } from "@/lib/tenant";
-import { getProducts, getCategories } from "@/lib/products";
+import { getProducts, getCategories, getFilterGroups, getProductFilterMap } from "@/lib/products";
 import { withTenantDb } from "@/db";
 import { settings } from "@/db/tenant-schema";
 import { HeroBanner } from "@/components/catalog/HeroBanner";
@@ -72,10 +72,12 @@ export default async function Home({
 
   const { categoria } = await searchParams;
 
-  const [[s], allProducts, categoryList] = await Promise.all([
+  const [[s], allProducts, categoryList, filterGroupList, productFilterMap] = await Promise.all([
     withTenantDb(tenant.schemaName, (db) => db.select().from(settings).limit(1)),
     getProducts(tenant.schemaName),
     getCategories(tenant.schemaName),
+    getFilterGroups(tenant.schemaName),
+    getProductFilterMap(tenant.schemaName),
   ]);
 
   // ── Hero desktop: video o carrusel de imágenes ──────────────
@@ -156,6 +158,8 @@ export default async function Home({
           <ProductGrid
             products={gridProducts}
             categories={categoryList}
+            filterGroups={filterGroupList}
+            productFilterMap={productFilterMap}
             activeCategory={categoria}
             whatsapp={tenant.whatsappNumber}
             categoriesStyle={(s?.categoriesStyle as import("@/components/catalog/ProductGrid").CatStyle) ?? "stories"}
