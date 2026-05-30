@@ -310,7 +310,11 @@ function FilterAccordion({ group, activeOptionSlugs, onToggle }: {
           {group.options.map((opt) => {
             const checked = activeOptionSlugs.has(opt.slug);
             return (
-              <label key={opt.id} className="flex items-center gap-2.5 cursor-pointer group">
+              <label
+                key={opt.id}
+                onClick={() => onToggle(group.slug, opt.slug)}
+                className="flex items-center gap-2.5 cursor-pointer group"
+              >
                 <span className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${checked ? "bg-indigo-600 border-indigo-600" : "border-gray-300 group-hover:border-indigo-400"}`}>
                   {checked && <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
                 </span>
@@ -421,8 +425,8 @@ export function ProductGrid({
   const FilterComponent = STYLE_MAP[categoriesStyle] ?? StoriesFilter;
   const hasFacets = filterGroups.length > 0;
 
-  // ── Sidebar content ────────────────────────────────────────────────────
-  const SidebarContent = () => (
+  // ── Sidebar content — función, no componente, para evitar desmontaje en re-renders
+  const renderFilters = () => (
     <div className="space-y-1">
       {filterGroups.map((group) => (
         <FilterAccordion
@@ -452,7 +456,7 @@ export function ProductGrid({
                 </button>
               )}
             </div>
-            <SidebarContent />
+            {renderFilters()}
           </div>
         </aside>
       )}
@@ -570,7 +574,7 @@ export function ProductGrid({
             </div>
             {/* Body */}
             <div className="overflow-y-auto flex-1 px-6 py-4">
-              <SidebarContent />
+              {renderFilters()}
             </div>
             {/* Footer */}
             <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
