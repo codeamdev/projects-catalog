@@ -75,3 +75,4 @@ temp/
 
 # ── Credenciales locales ──────────────────────────────────────────
 CREDENCIALES.md
+*.pdf
