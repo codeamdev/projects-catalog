@@ -4,12 +4,13 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
-import { Menu, X, LineChart, Package, Tag, ClipboardList, Settings, ExternalLink, LogOut } from "lucide-react";
+import { Menu, X, LineChart, Package, Tag, ClipboardList, Settings, ExternalLink, LogOut, SlidersHorizontal } from "lucide-react";
 
 const NAV = [
   { href: "/admin", label: "Informes", icon: LineChart, exact: true },
   { href: "/admin/products", label: "Productos", icon: Package },
   { href: "/admin/categories", label: "Categorías", icon: Tag },
+  { href: "/admin/filters", label: "Filtros", icon: SlidersHorizontal },
   { href: "/admin/orders", label: "Pedidos", icon: ClipboardList },
   { href: "/admin/settings", label: "Ajustes", icon: Settings },
 ];

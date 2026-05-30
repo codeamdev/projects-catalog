@@ -7,6 +7,8 @@ import { MultiImageUpload } from "./MultiImageUpload";
 import type { ActionResult } from "@/app/api/admin/actions";
 
 interface Category { id: string; name: string }
+interface FilterOption { id: string; name: string }
+interface FilterGroup { id: string; name: string; options: FilterOption[] }
 
 interface DefaultValues {
   title?: string;
@@ -24,6 +26,8 @@ interface DefaultValues {
 
 interface Props {
   categories: Category[];
+  filterGroups?: FilterGroup[];
+  selectedFilterOptionIds?: string[];
   action: (formData: FormData) => Promise<ActionResult>;
   deleteAction?: () => Promise<ActionResult>;
   defaultValues?: DefaultValues;
@@ -31,7 +35,7 @@ interface Props {
 
 const INPUT = "w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300";
 
-export function ProductForm({ categories, action, deleteAction, defaultValues }: Props) {
+export function ProductForm({ categories, filterGroups = [], selectedFilterOptionIds = [], action, deleteAction, defaultValues }: Props) {
   const [isPending, startTransition] = useTransition();
   const [trackStock, setTrackStock] = useState(defaultValues?.trackStock ?? false);
   const router = useRouter();
@@ -127,6 +131,40 @@ export function ProductForm({ categories, action, deleteAction, defaultValues }:
 
       {/* Imágenes — subida directa al servidor */}
       <MultiImageUpload name="imageUrls" defaultValue={defaultValues?.imageUrls} />
+
+      {/* Filtros */}
+      {filterGroups.length > 0 && (
+        <div className="space-y-4">
+          <label className="block text-sm font-medium text-gray-700">Filtros</label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {filterGroups.map((group) => (
+              <div key={group.id} className="border border-gray-100 rounded-xl p-4">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                  {group.name}
+                </p>
+                {group.options.length === 0 ? (
+                  <p className="text-xs text-gray-400">Sin opciones configuradas</p>
+                ) : (
+                  <div className="space-y-2">
+                    {group.options.map((opt) => (
+                      <label key={opt.id} className="flex items-center gap-2 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          name="filter_option_ids"
+                          value={opt.id}
+                          defaultChecked={selectedFilterOptionIds.includes(opt.id)}
+                          className="w-4 h-4 rounded accent-indigo-600"
+                        />
+                        <span className="text-sm text-gray-700">{opt.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Tags */}
       <div>

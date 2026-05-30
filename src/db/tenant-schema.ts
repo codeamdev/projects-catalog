@@ -11,6 +11,7 @@ import {
   index,
   smallint,
   unique,
+  primaryKey,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -119,6 +120,36 @@ export const settings = pgTable("settings", {
   unique("settings_singleton_unique").on(t.singleton),
 ]);
 
+// ── Filtros ───────────────────────────────────────────────────
+
+export const filterGroups = pgTable("filter_groups", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text("name").notNull(),
+  slug: text("slug").unique().notNull(),
+  order: integer("order").default(0).notNull(),
+});
+
+export const filterOptions = pgTable(
+  "filter_options",
+  {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    groupId: text("group_id").notNull().references(() => filterGroups.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    slug: text("slug").notNull(),
+    order: integer("order").default(0).notNull(),
+  },
+  (t) => [unique().on(t.groupId, t.slug)]
+);
+
+export const productFilters = pgTable(
+  "product_filters",
+  {
+    productId: text("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
+    optionId: text("option_id").notNull().references(() => filterOptions.id, { onDelete: "cascade" }),
+  },
+  (t) => [primaryKey({ columns: [t.productId, t.optionId] })]
+);
+
 // ── Relaciones ────────────────────────────────────────────────
 export const productsRelations = relations(products, ({ one, many }) => ({
   category: one(categories, {
@@ -145,6 +176,8 @@ export type ProductImage = typeof productImages.$inferSelect;
 export type AdminUser = typeof adminUsers.$inferSelect;
 export type Settings = typeof settings.$inferSelect;
 export type Order = typeof orders.$inferSelect;
+export type FilterGroup = typeof filterGroups.$inferSelect;
+export type FilterOption = typeof filterOptions.$inferSelect;
 
 export type ProductWithRelations = Product & {
   category: Category | null;

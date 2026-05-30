@@ -13,6 +13,9 @@ import {
   orders,
   settings,
   adminUsers,
+  filterGroups,
+  filterOptions,
+  productFilters,
 } from "@/db/tenant-schema";
 import { tenants } from "@/db/public-schema";
 
@@ -114,6 +117,8 @@ export async function createProduct(formData: FormData): Promise<ActionResult> {
     const tagArray = parsed.tags?.split(",").map((t) => t.trim()).filter(Boolean) ?? [];
     const urls = parsed.imageUrls?.split("\n").map((u) => u.trim()).filter(Boolean) ?? [];
 
+    const filterOptionIds = formData.getAll("filter_option_ids") as string[];
+
     await withTenantTransaction(schema, async (db) => {
       const [product] = await db
         .insert(products)
@@ -136,6 +141,12 @@ export async function createProduct(formData: FormData): Promise<ActionResult> {
       if (urls.length > 0) {
         await db.insert(productImages).values(
           urls.map((url, i) => ({ productId: product.id, url, order: i }))
+        );
+      }
+
+      if (filterOptionIds.length > 0) {
+        await db.insert(productFilters).values(
+          filterOptionIds.map((optionId) => ({ productId: product.id, optionId }))
         );
       }
     });
@@ -176,6 +187,7 @@ export async function updateProduct(productId: string, formData: FormData): Prom
 
     const tagArray = parsed.tags?.split(",").map((t) => t.trim()).filter(Boolean) ?? [];
     const urls = parsed.imageUrls?.split("\n").map((u) => u.trim()).filter(Boolean) ?? [];
+    const filterOptionIds = formData.getAll("filter_option_ids") as string[];
 
     await withTenantTransaction(schema, async (db) => {
       await db
@@ -197,10 +209,16 @@ export async function updateProduct(productId: string, formData: FormData): Prom
         .where(eq(products.id, productId));
 
       await db.delete(productImages).where(eq(productImages.productId, productId));
-
       if (urls.length > 0) {
         await db.insert(productImages).values(
           urls.map((url, i) => ({ productId, url, order: i }))
+        );
+      }
+
+      await db.delete(productFilters).where(eq(productFilters.productId, productId));
+      if (filterOptionIds.length > 0) {
+        await db.insert(productFilters).values(
+          filterOptionIds.map((optionId) => ({ productId, optionId }))
         );
       }
     });
@@ -398,6 +416,70 @@ export async function updateTenantConfig(formData: FormData): Promise<ActionResu
     return { ok: true, data: undefined };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Error al guardar configuración" };
+  }
+}
+
+// ── Filtros ───────────────────────────────────────────────────────
+
+export async function createFilterGroup(formData: FormData): Promise<ActionResult> {
+  try {
+    const session = await requireRole("ADMIN");
+    const name = (formData.get("name") as string | null)?.trim();
+    if (!name) return { ok: false, error: "El nombre es requerido" };
+    const slug = toSlug(name);
+    await withTenantDb(session.user.schemaName, (db) =>
+      db.insert(filterGroups).values({ name, slug })
+    );
+    revalidatePath("/admin/filters");
+    return { ok: true, data: undefined };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Error al crear grupo" };
+  }
+}
+
+export async function deleteFilterGroup(groupId: string): Promise<ActionResult> {
+  try {
+    const session = await requireRole("ADMIN");
+    await withTenantDb(session.user.schemaName, (db) =>
+      db.delete(filterGroups).where(eq(filterGroups.id, groupId))
+    );
+    revalidatePath("/admin/filters");
+    revalidatePath("/admin/products");
+    revalidatePath("/");
+    return { ok: true, data: undefined };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Error al eliminar grupo" };
+  }
+}
+
+export async function createFilterOption(groupId: string, formData: FormData): Promise<ActionResult> {
+  try {
+    const session = await requireRole("ADMIN");
+    const name = (formData.get("name") as string | null)?.trim();
+    if (!name) return { ok: false, error: "El nombre es requerido" };
+    const slug = toSlug(name);
+    await withTenantDb(session.user.schemaName, (db) =>
+      db.insert(filterOptions).values({ groupId, name, slug })
+    );
+    revalidatePath("/admin/filters");
+    revalidatePath("/admin/products");
+    return { ok: true, data: undefined };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Error al crear opción" };
+  }
+}
+
+export async function deleteFilterOption(optionId: string): Promise<ActionResult> {
+  try {
+    const session = await requireRole("ADMIN");
+    await withTenantDb(session.user.schemaName, (db) =>
+      db.delete(filterOptions).where(eq(filterOptions.id, optionId))
+    );
+    revalidatePath("/admin/filters");
+    revalidatePath("/");
+    return { ok: true, data: undefined };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Error al eliminar opción" };
   }
 }
 
