@@ -32,6 +32,7 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: [
     "localhost",
     "allexclusive.com",
+    "vermicatalogo.com",
   ],
   images: {
     remotePatterns: [
