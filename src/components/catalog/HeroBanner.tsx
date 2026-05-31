@@ -100,10 +100,10 @@ export function HeroBanner({
                 i === currentMobile ? "opacity-100" : "opacity-0"
               }`}
             >
-              <Image src={src} alt="" fill sizes="100vw"
+              <Image src={src} alt="" fill sizes="100vw" unoptimized
                 className={`object-cover ${posClass} scale-110 blur-2xl opacity-70`}
                 priority={i === 0} aria-hidden />
-              <Image src={src} alt="" fill sizes="100vw"
+              <Image src={src} alt="" fill sizes="100vw" unoptimized
                 className={`object-contain ${posClass}`}
                 priority={i === 0} />
             </div>
@@ -112,10 +112,10 @@ export function HeroBanner({
           {/* Imagen única móvil */}
           {!mobileVideo && hasMobileSingle && (
             <div className="sm:hidden absolute inset-0">
-              <Image src={mobileImgs[0]} alt="" fill sizes="100vw"
+              <Image src={mobileImgs[0]} alt="" fill sizes="100vw" unoptimized
                 className={`object-cover ${posClass} scale-110 blur-2xl opacity-70 animate-ken-burns origin-center`}
                 aria-hidden priority />
-              <Image src={mobileImgs[0]} alt="" fill sizes="100vw"
+              <Image src={mobileImgs[0]} alt="" fill sizes="100vw" unoptimized
                 className={`object-contain ${posClass} animate-ken-burns origin-center`}
                 priority />
             </div>
@@ -135,19 +135,19 @@ export function HeroBanner({
                     i === current ? "opacity-100" : "opacity-0"
                   }`}
                 >
-                  <Image src={src} alt="" fill sizes="100vw"
+                  <Image src={src} alt="" fill sizes="100vw" unoptimized
                     className={`object-cover ${posClass} scale-110 blur-2xl opacity-70`}
                     priority={i === 0} aria-hidden />
-                  <Image src={src} alt="" fill sizes="100vw"
+                  <Image src={src} alt="" fill sizes="100vw" unoptimized
                     className={`object-contain ${posClass}`} priority={i === 0} />
                 </div>
               ))}
               {!videoUrl && hasSingleImage && (
                 <div className="sm:hidden absolute inset-0">
-                  <Image src={images[0]} alt="" fill sizes="100vw"
+                  <Image src={images[0]} alt="" fill sizes="100vw" unoptimized
                     className={`object-cover ${posClass} scale-110 blur-2xl opacity-70 animate-ken-burns origin-center`}
                     aria-hidden priority />
-                  <Image src={images[0]} alt="" fill sizes="100vw"
+                  <Image src={images[0]} alt="" fill sizes="100vw" unoptimized
                     className={`object-contain ${posClass} animate-ken-burns origin-center`} priority />
                 </div>
               )}
@@ -173,10 +173,10 @@ export function HeroBanner({
                 i === current ? "opacity-100" : "opacity-0"
               }`}
             >
-              <Image src={src} alt="" fill sizes="100vw"
+              <Image src={src} alt="" fill sizes="100vw" unoptimized
                 className={`object-cover ${posClass} scale-110 blur-2xl opacity-70`}
                 priority={i === 0} aria-hidden />
-              <Image src={src} alt="" fill sizes="70vw"
+              <Image src={src} alt="" fill sizes="70vw" unoptimized
                 className={`object-contain ${posClass}`} priority={i === 0} />
             </div>
           ))}
@@ -184,10 +184,10 @@ export function HeroBanner({
           {/* Imagen única desktop */}
           {!videoUrl && hasSingleImage && (
             <div className="hidden sm:block absolute inset-0">
-              <Image src={images[0]} alt="" fill sizes="100vw"
+              <Image src={images[0]} alt="" fill sizes="100vw" unoptimized
                 className={`object-cover ${posClass} scale-110 blur-2xl opacity-70 animate-ken-burns origin-center`}
                 aria-hidden priority />
-              <Image src={images[0]} alt="" fill sizes="70vw"
+              <Image src={images[0]} alt="" fill sizes="70vw" unoptimized
                 className={`object-contain ${posClass} animate-ken-burns origin-center`} priority />
             </div>
           )}
