@@ -10,7 +10,8 @@
     "db:migrate": "npx tsx sql/migrate.ts",
     "db:migrate:prod": "npx tsx sql/migrate.ts",
     "tenant:create": "npx tsx sql/create-tenant.ts",
-    "superadmin:create": "npx tsx sql/create-superadmin.ts"
+    "superadmin:create": "npx tsx sql/create-superadmin.ts",
+    "uploads:optimize": "npx tsx sql/optimize-uploads.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
