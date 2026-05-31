@@ -1,8 +1,9 @@
 import Link from "next/link";
+import { Search } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { withTenantDb } from "@/db";
 import { products, categories, productImages } from "@/db/tenant-schema";
-import { desc, eq, count, sql } from "drizzle-orm";
+import { desc, eq, count, sql, ilike, and } from "drizzle-orm";
 import { ToggleActiveButton } from "@/components/admin/ToggleActiveButton";
 import Image from "next/image";
 
@@ -11,13 +12,15 @@ const PAGE_SIZE = 20;
 export default async function AdminProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; q?: string }>;
 }) {
   const session = await auth();
   const schema = session!.user.schemaName;
-  const { page: pageParam } = await searchParams;
+  const { page: pageParam, q: qParam } = await searchParams;
+  const q = qParam?.trim() ?? "";
   const page = Math.max(1, parseInt(pageParam ?? "1", 10));
   const offset = (page - 1) * PAGE_SIZE;
+  const where = q ? ilike(products.title, `%${q}%`) : undefined;
 
   const [rows, [{ total }]] = await withTenantDb(schema, async (db) => {
     const data = await db
@@ -28,7 +31,6 @@ export default async function AdminProductsPage({
         currency: products.currency,
         active: products.active,
         categoryName: categories.name,
-        // Primera imagen para thumbnail
         imageUrl: sql<string | null>`(
           SELECT url FROM product_images
           WHERE product_id = ${products.id}
@@ -38,23 +40,27 @@ export default async function AdminProductsPage({
       })
       .from(products)
       .leftJoin(categories, eq(products.categoryId, categories.id))
+      .where(where)
       .orderBy(desc(products.createdAt))
       .limit(PAGE_SIZE)
       .offset(offset);
 
-    const [totals] = await db.select({ total: count() }).from(products);
+    const [totals] = await db.select({ total: count() }).from(products).where(where);
 
     return [data, [totals]];
   });
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
+  const paginationBase = q ? `/admin/products?q=${encodeURIComponent(q)}` : "/admin/products";
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Productos</h1>
-          <p className="text-sm text-gray-400 mt-0.5">{total} en total</p>
+          <p className="text-sm text-gray-400 mt-0.5">
+            {total} {q ? `resultado${total !== 1 ? "s" : ""} para "${q}"` : "en total"}
+          </p>
         </div>
         <Link
           href="/admin/products/new"
@@ -63,6 +69,29 @@ export default async function AdminProductsPage({
           + Nuevo producto
         </Link>
       </div>
+
+      {/* Buscador */}
+      <form method="GET" action="/admin/products" className="mb-4">
+        <div className="relative max-w-sm">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          <input
+            name="q"
+            defaultValue={q}
+            placeholder="Buscar por nombre…"
+            autoComplete="off"
+            className="w-full border border-gray-200 rounded-xl pl-10 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 placeholder:text-gray-400"
+          />
+          {q && (
+            <Link
+              href="/admin/products"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              title="Limpiar búsqueda"
+            >
+              ✕
+            </Link>
+          )}
+        </div>
+      </form>
 
       <div className="bg-white rounded-2xl border overflow-x-auto">
         {rows.length === 0 ? (
@@ -130,7 +159,7 @@ export default async function AdminProductsPage({
           <div className="flex gap-2">
             {page > 1 && (
               <Link
-                href={`/admin/products?page=${page - 1}`}
+                href={`${paginationBase}${q ? "&" : "?"}page=${page - 1}`}
                 className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm hover:bg-gray-50 transition-colors"
               >
                 ← Anterior
@@ -138,7 +167,7 @@ export default async function AdminProductsPage({
             )}
             {page < totalPages && (
               <Link
-                href={`/admin/products?page=${page + 1}`}
+                href={`${paginationBase}${q ? "&" : "?"}page=${page + 1}`}
                 className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm hover:bg-gray-50 transition-colors"
               >
                 Siguiente →
