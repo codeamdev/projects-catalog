@@ -184,28 +184,31 @@ export function ProductCard({ product, whatsapp, variant = "regular" }: Props) {
         <p className="text-sm font-semibold text-gray-900 line-clamp-2 leading-snug flex-1">
           {product.title}
         </p>
-        <div className="flex items-end justify-between gap-2">
-          <div className="flex flex-col leading-tight">
+        <div className="flex items-end justify-between gap-1.5 mt-auto">
+          <div className="flex flex-col leading-tight min-w-0">
             {formattedPrice ? (
-              <span className="text-base font-bold text-gray-900">{formattedPrice}</span>
+              <span className="text-sm font-bold text-gray-900 truncate">{formattedPrice}</span>
             ) : (
-              <span className="text-xs text-gray-400">Precio a consultar</span>
+              <span className="text-xs text-gray-400">Consultar</span>
             )}
             {formattedOriginal && (
-              <span className="text-xs text-gray-400 line-through">{formattedOriginal}</span>
+              <span className="text-xs text-gray-400 line-through truncate">{formattedOriginal}</span>
             )}
           </div>
           <button
             onClick={handleAddToCart}
             disabled={outOfStock}
-            className={`flex-shrink-0 flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${
+            className={`flex-shrink-0 flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 rounded-full transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${
               added
                 ? "bg-green-500 text-white"
                 : "bg-[var(--primary)] text-white hover:opacity-90"
             }`}
           >
             {added ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
-            {outOfStock ? "Agotado" : added ? "Listo" : "Agregar"}
+            {/* Texto solo en tarjetas anchas (sm: 4 columnas) */}
+            <span className="hidden sm:inline">
+              {outOfStock ? "Agotado" : added ? "Listo" : "Agregar"}
+            </span>
           </button>
         </div>
       </div>

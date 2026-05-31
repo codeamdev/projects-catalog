@@ -468,7 +468,7 @@ export function ProductGrid({
   );
 
   return (
-    <div className={`${hasFacets ? "lg:flex lg:gap-6" : ""} px-2 sm:px-3`}>
+    <div id="feed" className={`${hasFacets ? "lg:flex lg:gap-6" : ""} px-2 sm:px-3`}>
 
       {/* ── Sidebar desktop ─────────────────────────────────────────── */}
       {hasFacets && (
