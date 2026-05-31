@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useState, useMemo } from "react";
-import { Search, SlidersHorizontal, X, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, SlidersHorizontal, X, ChevronDown, ChevronUp, ArrowUpDown } from "lucide-react";
 import { ProductCard } from "./ProductCard";
 import type { ProductWithRelations, Category, FilterGroupWithOptions } from "@/lib/products";
 
@@ -328,6 +328,14 @@ function FilterAccordion({ group, activeOptionSlugs, onToggle }: {
   );
 }
 
+const ORDEN_OPTIONS = [
+  { value: "destacados", label: "Destacados" },
+  { value: "precio-asc", label: "Menor precio" },
+  { value: "precio-desc", label: "Mayor precio" },
+  { value: "descuento", label: "Mayor descuento" },
+  { value: "recientes", label: "Más recientes" },
+] as const;
+
 // ── ProductGrid ────────────────────────────────────────────────────────────────
 
 export function ProductGrid({
@@ -369,6 +377,15 @@ export function ProductGrid({
     router.push(p.toString() ? `${pathname}?${p.toString()}` : pathname, { scroll: false });
   }
 
+  const orden = (searchParams.get("orden") ?? "destacados") as typeof ORDEN_OPTIONS[number]["value"];
+
+  function setOrden(value: string) {
+    const p = new URLSearchParams(searchParams.toString());
+    if (value === "destacados") p.delete("orden");
+    else p.set("orden", value);
+    router.push(p.toString() ? `${pathname}?${p.toString()}` : pathname, { scroll: false });
+  }
+
   // ── Active facet filters from URL ──────────────────────────────────────
   const activeFilters = useMemo(() => {
     const result: Record<string, Set<string>> = {};
@@ -394,7 +411,7 @@ export function ProductGrid({
     ) as { groupSlug: string; groupName: string; optionSlug: string; optionName: string }[],
   [activeFilters, filterGroups]);
 
-  // ── Filtered products ──────────────────────────────────────────────────
+  // ── Filtered + sorted products ────────────────────────────────────────
   const filtered = useMemo(() => {
     let result = products;
 
@@ -417,8 +434,19 @@ export function ProductGrid({
       );
     }
 
+    // Ordenar
+    result = [...result].sort((a, b) => {
+      if (orden === "precio-asc") return (Number(a.price) || 0) - (Number(b.price) || 0);
+      if (orden === "precio-desc") return (Number(b.price) || 0) - (Number(a.price) || 0);
+      if (orden === "descuento") return (b.discountPercent ?? 0) - (a.discountPercent ?? 0);
+      if (orden === "recientes") return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      // destacados (default): featured primero, luego createdAt desc
+      if (a.featured !== b.featured) return a.featured ? -1 : 1;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
     return result;
-  }, [products, search, activeFilters, filterGroups, productFilterMap]);
+  }, [products, search, activeFilters, filterGroups, productFilterMap, orden]);
 
   const [heroProduct, ...rest] = filtered;
   const heroIsWide = !!heroProduct?.featured;
@@ -464,7 +492,7 @@ export function ProductGrid({
       {/* ── Contenido principal ─────────────────────────────────────── */}
       <div className="flex-1 min-w-0">
 
-        {/* Search + botón filtros mobile */}
+        {/* Search + filtros + ordenar */}
         <div className="flex gap-2 mb-3">
           <div className="relative flex-1">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
@@ -472,23 +500,40 @@ export function ProductGrid({
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por nombre o tag…"
+              placeholder="Buscar…"
               className="w-full bg-gray-50 border border-gray-200 rounded-2xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 placeholder:text-gray-400"
             />
           </div>
+
+          {/* Filtros (solo mobile) */}
           {hasFacets && (
             <button
               onClick={() => setSheetOpen(true)}
-              className={`lg:hidden flex items-center gap-1.5 px-4 py-2.5 rounded-2xl border text-sm font-medium transition-colors ${
+              className={`lg:hidden flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl border text-sm font-medium transition-colors flex-shrink-0 ${
                 totalActive > 0
                   ? "bg-indigo-600 text-white border-indigo-600"
                   : "bg-white text-gray-700 border-gray-200 hover:border-gray-300"
               }`}
             >
               <SlidersHorizontal className="w-4 h-4" />
-              {totalActive > 0 ? totalActive : ""}
+              {totalActive > 0 && <span>{totalActive}</span>}
             </button>
           )}
+
+          {/* Ordenar por */}
+          <div className="relative flex-shrink-0">
+            <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+            <select
+              value={orden}
+              onChange={(e) => setOrden(e.target.value)}
+              className="appearance-none bg-white border border-gray-200 rounded-2xl pl-8 pr-6 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 cursor-pointer"
+            >
+              {ORDEN_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+          </div>
         </div>
 
         {/* Chips de filtros activos */}
