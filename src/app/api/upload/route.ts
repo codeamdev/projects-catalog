@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { auth } from "@/lib/auth";
+import sharp from "sharp";
 
 const IMAGE_MAX = 10 * 1024 * 1024;  // 10 MB
 const VIDEO_MAX = 200 * 1024 * 1024; // 200 MB
@@ -14,17 +15,24 @@ const ALLOWED_VIDEOS = new Set([
   "video/mp4", "video/webm", "video/ogg", "video/quicktime",
 ]);
 
-const EXT_MAP: Record<string, string> = {
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-  "image/gif": "gif",
-  "image/avif": "avif",
+const ALLOWED_VIDEO_EXT: Record<string, string> = {
   "video/mp4": "mp4",
   "video/webm": "webm",
   "video/ogg": "ogv",
   "video/quicktime": "mov",
 };
+
+// GIFs se guardan tal cual para preservar la animación
+async function processImage(buffer: Buffer, isGif: boolean): Promise<{ data: Buffer; ext: string }> {
+  if (isGif) return { data: buffer, ext: "gif" };
+
+  const data = await sharp(buffer)
+    .resize({ width: 1920, withoutEnlargement: true })
+    .webp({ quality: 82 })
+    .toBuffer();
+
+  return { data, ext: "webp" };
+}
 
 export async function POST(request: NextRequest) {
   const session = await auth();
@@ -61,13 +69,26 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const ext = EXT_MAP[file.type] ?? "bin";
-  const name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
   const subfolder = `uploads/${session.user.schemaName}`;
   const dir = join(process.cwd(), "public", subfolder);
-
   await mkdir(dir, { recursive: true });
-  await writeFile(join(dir, name), Buffer.from(await file.arrayBuffer()));
 
-  return NextResponse.json({ url: `/${subfolder}/${name}` });
+  const rawBuffer = Buffer.from(await file.arrayBuffer());
+  const stem = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+  let filename: string;
+  let fileBuffer: Buffer;
+
+  if (isVideo) {
+    filename = `${stem}.${ALLOWED_VIDEO_EXT[file.type] ?? "mp4"}`;
+    fileBuffer = rawBuffer;
+  } else {
+    const { data, ext } = await processImage(rawBuffer, file.type === "image/gif");
+    filename = `${stem}.${ext}`;
+    fileBuffer = data;
+  }
+
+  await writeFile(join(dir, filename), fileBuffer);
+
+  return NextResponse.json({ url: `/${subfolder}/${filename}` });
 }
