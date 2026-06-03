@@ -16,7 +16,7 @@ services:
       - uploads:/app/public/uploads   # videos e imágenes subidas
     network_mode: host                # necesario para conectar a PostgreSQL local
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
