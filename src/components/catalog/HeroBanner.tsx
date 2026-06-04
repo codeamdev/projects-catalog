@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
-import { Pause, Play } from "lucide-react";
+import { Pause, Play, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Props {
   title: string;
@@ -36,8 +36,11 @@ export function HeroBanner({
   const [videoPaused, setVideoPaused] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const videoMobileRef = useRef<HTMLVideoElement>(null);
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+  // Pausa el auto-avance 6s después de interacción manual
+  const pauseUntil = useRef(0);
 
-  // Contenido efectivo por breakpoint (fallback a desktop si móvil no tiene)
   const mobileVideo = videoUrlMobile || null;
   const mobileImgs  = imagesMobile.length > 0 ? imagesMobile : [];
 
@@ -47,18 +50,60 @@ export function HeroBanner({
   const hasMobileSingle   = mobileImgs.length === 1;
   const posClass = OBJECT_POSITION[imagePosition] ?? "object-center";
 
+  // ── Navegación desktop ────────────────────────────────────────
+  const goDesktop = useCallback((dir: 1 | -1) => {
+    pauseUntil.current = Date.now() + 6000;
+    setCurrent((c) => (c + dir + images.length) % images.length);
+  }, [images.length]);
+
+  // ── Navegación móvil ──────────────────────────────────────────
+  const goMobile = useCallback((dir: 1 | -1) => {
+    pauseUntil.current = Date.now() + 6000;
+    setCurrentMobile((c) => (c + dir + mobileImgs.length) % mobileImgs.length);
+  }, [mobileImgs.length]);
+
+  // ── Auto-avance desktop ───────────────────────────────────────
   useEffect(() => {
     if (!hasCarousel) return;
-    const id = setInterval(() => setCurrent((c) => (c + 1) % images.length), 5000);
+    const id = setInterval(() => {
+      if (Date.now() < pauseUntil.current) return;
+      setCurrent((c) => (c + 1) % images.length);
+    }, 5000);
     return () => clearInterval(id);
   }, [hasCarousel, images.length]);
 
+  // ── Auto-avance móvil ─────────────────────────────────────────
   useEffect(() => {
     if (!hasMobileCarousel) return;
-    const id = setInterval(() => setCurrentMobile((c) => (c + 1) % mobileImgs.length), 5000);
+    const id = setInterval(() => {
+      if (Date.now() < pauseUntil.current) return;
+      setCurrentMobile((c) => (c + 1) % mobileImgs.length);
+    }, 5000);
     return () => clearInterval(id);
   }, [hasMobileCarousel, mobileImgs.length]);
 
+  // ── Swipe táctil ──────────────────────────────────────────────
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  }
+
+  function handleTouchEnd(e: React.TouchEvent) {
+    const dx = touchStartX.current - e.changedTouches[0].clientX;
+    const dy = Math.abs(touchStartY.current - e.changedTouches[0].clientY);
+    // Solo procesa swipes predominantemente horizontales
+    if (Math.abs(dx) < 40 || dy > Math.abs(dx)) return;
+    const dir = dx > 0 ? 1 : -1;
+    const isMobile = window.innerWidth < 640;
+    if (isMobile) {
+      if (hasMobileCarousel) goMobile(dir);
+      else if (hasCarousel) goDesktop(dir);
+    } else {
+      if (hasCarousel) goDesktop(dir);
+    }
+  }
+
+  // ── Pausa de video ────────────────────────────────────────────
   function toggleVideoPause() {
     const isMobileBreakpoint = window.innerWidth < 640;
     const v = isMobileBreakpoint
@@ -69,31 +114,30 @@ export function HeroBanner({
     else { v.pause(); setVideoPaused(true); }
   }
 
-  return (
-    /*
-     * h-[65vh] funciona en todos los navegadores (no depende de svh/dvh).
-     * lg:h-screen = 100vh en desktop — impacto máximo.
-     * overflow-hidden en la section ES la clave para clipear todo.
-     */
-    <section className="relative w-full flex items-end h-dvh sm:h-[75vh] lg:h-screen overflow-hidden">
+  // ── Estilos comunes de flechas ────────────────────────────────
+  const arrowBase =
+    "absolute top-1/2 -translate-y-1/2 z-20 flex items-center justify-center " +
+    "w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/30 hover:bg-black/60 " +
+    "text-white backdrop-blur-sm transition-all active:scale-90 select-none";
 
+  return (
+    <section
+      className="relative w-full flex items-end h-dvh sm:h-[75vh] lg:h-screen overflow-hidden"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       {/* ── Capa de fondo ─────────────────────────────────────────── */}
       <div className="absolute inset-0">
         <div className="relative w-full h-full overflow-hidden">
 
           {/* ════ MÓVIL (< sm) ════════════════════════════════════════ */}
 
-          {/* Video móvil */}
           {mobileVideo && (
-            <video
-              ref={videoMobileRef}
-              autoPlay muted loop playsInline
+            <video ref={videoMobileRef} autoPlay muted loop playsInline
               className={`sm:hidden absolute inset-0 w-full h-full object-contain ${posClass}`}
-              src={mobileVideo}
-            />
+              src={mobileVideo} />
           )}
 
-          {/* Carrusel móvil (imágenes verticales) */}
           {!mobileVideo && hasMobileCarousel && mobileImgs.map((src, i) => (
             <div key={src}
               className={`sm:hidden absolute inset-0 transition-opacity duration-[1200ms] ease-in-out ${
@@ -104,24 +148,21 @@ export function HeroBanner({
                 className={`object-cover ${posClass} scale-110 blur-2xl opacity-70`}
                 priority={i === 0} aria-hidden />
               <Image src={src} alt="" fill sizes="100vw" unoptimized
-                className={`object-contain ${posClass}`}
-                priority={i === 0} />
+                className={`object-contain ${posClass}`} priority={i === 0} />
             </div>
           ))}
 
-          {/* Imagen única móvil */}
           {!mobileVideo && hasMobileSingle && (
             <div className="sm:hidden absolute inset-0">
               <Image src={mobileImgs[0]} alt="" fill sizes="100vw" unoptimized
                 className={`object-cover ${posClass} scale-110 blur-2xl opacity-70 animate-ken-burns origin-center`}
                 aria-hidden priority />
               <Image src={mobileImgs[0]} alt="" fill sizes="100vw" unoptimized
-                className={`object-contain ${posClass} animate-ken-burns origin-center`}
-                priority />
+                className={`object-contain ${posClass} animate-ken-burns origin-center`} priority />
             </div>
           )}
 
-          {/* Fallback móvil → usa contenido desktop si no hay contenido específico */}
+          {/* Fallback móvil → usa contenido desktop */}
           {!mobileVideo && mobileImgs.length === 0 && (videoUrl || images.length > 0) && (
             <>
               {videoUrl && (
@@ -156,17 +197,12 @@ export function HeroBanner({
 
           {/* ════ DESKTOP / TABLET (≥ sm) ════════════════════════════ */}
 
-          {/* Video desktop */}
           {videoUrl && (
-            <video
-              ref={videoRef}
-              autoPlay muted loop playsInline
+            <video ref={videoRef} autoPlay muted loop playsInline
               className={`hidden sm:block absolute inset-0 w-full h-full object-cover ${posClass}`}
-              src={videoUrl}
-            />
+              src={videoUrl} />
           )}
 
-          {/* Carrusel desktop */}
           {!videoUrl && hasCarousel && images.map((src, i) => (
             <div key={src}
               className={`hidden sm:block absolute inset-0 transition-opacity duration-[1200ms] ease-in-out ${
@@ -181,7 +217,6 @@ export function HeroBanner({
             </div>
           ))}
 
-          {/* Imagen única desktop */}
           {!videoUrl && hasSingleImage && (
             <div className="hidden sm:block absolute inset-0">
               <Image src={images[0]} alt="" fill sizes="100vw" unoptimized
@@ -192,18 +227,47 @@ export function HeroBanner({
             </div>
           )}
 
-          {/* Sin ningún contenido — degradé del color del tenant */}
           {!videoUrl && images.length === 0 && !mobileVideo && mobileImgs.length === 0 && (
-            <div
-              className="absolute inset-0"
-              style={{ background: `linear-gradient(160deg, ${primaryColor} 0%, #000 80%)` }}
-            />
+            <div className="absolute inset-0"
+              style={{ background: `linear-gradient(160deg, ${primaryColor} 0%, #000 80%)` }} />
           )}
         </div>
       </div>
 
       {/* ── Overlay de profundidad ───────────────────────────────── */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/15 to-black/35 pointer-events-none" />
+
+      {/* ── Flechas desktop (solo si hay carrusel) ───────────────── */}
+      {hasCarousel && !videoUrl && (
+        <>
+          <button onClick={() => goDesktop(-1)} aria-label="Imagen anterior"
+            className={`hidden sm:flex ${arrowBase} left-4`}>
+            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+          </button>
+          <button onClick={() => goDesktop(1)} aria-label="Imagen siguiente"
+            className={`hidden sm:flex ${arrowBase} right-4`}>
+            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+          </button>
+        </>
+      )}
+
+      {/* ── Flechas móvil (carrusel móvil propio o fallback desktop) */}
+      {(hasMobileCarousel || (!mobileVideo && mobileImgs.length === 0 && hasCarousel)) && !videoUrl && !mobileVideo && (
+        <>
+          <button
+            onClick={() => hasMobileCarousel ? goMobile(-1) : goDesktop(-1)}
+            aria-label="Imagen anterior"
+            className={`sm:hidden ${arrowBase} left-3`}>
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => hasMobileCarousel ? goMobile(1) : goDesktop(1)}
+            aria-label="Imagen siguiente"
+            className={`sm:hidden ${arrowBase} right-3`}>
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </>
+      )}
 
       {/* ── Contenido editorial ──────────────────────────────────── */}
       <div className="relative z-10 w-full max-w-screen-xl mx-auto px-5 sm:px-8 pb-8 sm:pb-20 lg:pb-28">
@@ -229,52 +293,44 @@ export function HeroBanner({
         </a>
       </div>
 
-      {/* Botón pausa de video — WCAG 2.1 criterio 2.2.2 */}
+      {/* ── Botón pausa de video ─────────────────────────────────── */}
       {(videoUrl || mobileVideo) && (
-        <button
-          onClick={toggleVideoPause}
+        <button onClick={toggleVideoPause}
           aria-label={videoPaused ? "Reproducir video" : "Pausar video"}
           className={`absolute bottom-6 right-5 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors ${
             mobileVideo && !videoUrl ? "sm:hidden" : videoUrl && !mobileVideo ? "hidden sm:flex" : ""
-          }`}
-        >
+          }`}>
           {videoPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
         </button>
       )}
 
-      {/* Dots del carrusel móvil */}
+      {/* ── Dots carrusel móvil ──────────────────────────────────── */}
       {hasMobileCarousel && (
         <div className="sm:hidden absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-10">
           {mobileImgs.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrentMobile(i)}
+            <button key={i} onClick={() => { pauseUntil.current = Date.now() + 6000; setCurrentMobile(i); }}
               aria-label={`Ir a imagen ${i + 1}`}
               className={`h-1.5 rounded-full transition-all duration-300 ${
                 i === currentMobile ? "bg-white w-6" : "bg-white/35 w-1.5 hover:bg-white/60"
-              }`}
-            />
+              }`} />
           ))}
         </div>
       )}
 
-      {/* Dots del carrusel desktop */}
+      {/* ── Dots carrusel desktop ────────────────────────────────── */}
       {hasCarousel && (
         <div className="hidden sm:flex absolute bottom-6 left-1/2 -translate-x-1/2 gap-2 z-10">
           {images.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrent(i)}
+            <button key={i} onClick={() => { pauseUntil.current = Date.now() + 6000; setCurrent(i); }}
               aria-label={`Ir a imagen ${i + 1}`}
               className={`h-1.5 rounded-full transition-all duration-300 ${
                 i === current ? "bg-white w-6" : "bg-white/35 w-1.5 hover:bg-white/60"
-              }`}
-            />
+              }`} />
           ))}
         </div>
       )}
 
-      {/* Indicador de scroll */}
+      {/* ── Indicador de scroll ──────────────────────────────────── */}
       {!hasCarousel && !videoUrl && (
         <div className="absolute bottom-6 right-5 flex flex-col items-center gap-1.5 text-white/30 z-10">
           <span className="text-[9px] uppercase tracking-[0.3em]">scroll</span>
