@@ -11,7 +11,7 @@ import { Pool } from "pg";
 const connectionString = process.env.DATABASE_URL!;
 const ssl = connectionString?.includes("supabase.com") ? { rejectUnauthorized: false } : undefined;
 const pool = new Pool({ connectionString, ssl });
-const TENANT_SCHEMAS = ["perfumeria", "ropa", "tendencias"];
+const TENANT_SCHEMAS: string[] = [];
 
 async function migrate() {
   const client = await pool.connect();
