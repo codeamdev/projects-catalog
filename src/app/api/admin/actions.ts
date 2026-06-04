@@ -329,6 +329,7 @@ export async function updateSettings(formData: FormData): Promise<ActionResult> 
       categoriesStyle,
       metaTitle: (formData.get("meta_title") as string) || null,
       metaDescription: (formData.get("meta_description") as string) || null,
+      googleSiteVerification: (formData.get("google_site_verification") as string) || null,
       footerText: (formData.get("footer_text") as string) || null,
       updatedAt: new Date(),
     };

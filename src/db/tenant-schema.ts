@@ -114,6 +114,7 @@ export const settings = pgTable("settings", {
   footerText: text("footer_text"),
   discountCode: text("discount_code"),
   discountCodePercent: smallint("discount_code_percent"),
+  googleSiteVerification: text("google_site_verification"),
   inventoryEnabled: boolean("inventory_enabled").default(false).notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (t) => [

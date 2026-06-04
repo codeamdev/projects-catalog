@@ -36,6 +36,7 @@ interface Props {
     categoriesStyle: string;
     metaTitle: string;
     metaDescription: string;
+    googleSiteVerification: string;
     footerText: string;
     discountCode: string;
     discountCodePercent: number | null;
@@ -248,6 +249,15 @@ export function SettingsClient({ defaults }: Props) {
               defaultValue={defaults.metaDescription}
               rows={2}
               className={`${INPUT} resize-none`}
+            />
+          </div>
+          <div>
+            <label className={LABEL}>Google Site Verification</label>
+            <input
+              name="google_site_verification"
+              defaultValue={defaults.googleSiteVerification}
+              placeholder="Código de verificación de Google Search Console"
+              className={INPUT}
             />
           </div>
           <div>

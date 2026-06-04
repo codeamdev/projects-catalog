@@ -31,6 +31,7 @@ export default async function SettingsPage() {
         categoriesStyle: (s?.categoriesStyle ?? "stories") as string,
         metaTitle: s?.metaTitle ?? "",
         metaDescription: s?.metaDescription ?? "",
+        googleSiteVerification: s?.googleSiteVerification ?? "",
         footerText: s?.footerText ?? "",
         discountCode: s?.discountCode ?? "",
         discountCodePercent: s?.discountCodePercent ?? null,

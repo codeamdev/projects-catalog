@@ -15,12 +15,18 @@ export async function generateMetadata(): Promise<Metadata> {
   if (!tenant) return { title: "Catálogo" };
 
   const [s] = await withTenantDb(tenant.schemaName, (db) =>
-    db.select({ metaTitle: settings.metaTitle, metaDescription: settings.metaDescription })
-      .from(settings).limit(1)
+    db.select({
+      metaTitle: settings.metaTitle,
+      metaDescription: settings.metaDescription,
+      googleSiteVerification: settings.googleSiteVerification,
+    }).from(settings).limit(1)
   );
   return {
     title: s?.metaTitle || tenant.name,
     description: s?.metaDescription || undefined,
+    ...(s?.googleSiteVerification && {
+      verification: { google: s.googleSiteVerification },
+    }),
   };
 }
 
