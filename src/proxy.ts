@@ -39,9 +39,9 @@ export function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL("/admin", request.url));
     }
 
-    const res = NextResponse.next();
-    res.headers.set("x-tenant-subdomain", subdomain);
-    return res;
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-tenant-subdomain", subdomain);
+    return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
   // Sin subdominio: dominio raíz → /admin/* no tiene sentido, redirigir al superadmin
@@ -61,8 +61,10 @@ export function proxy(request: NextRequest) {
   const tenant = queryTenant ?? cookieTenant;
   if (!tenant) return NextResponse.next();
 
-  const res = NextResponse.next();
-  res.headers.set("x-tenant-subdomain", tenant);
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-tenant-subdomain", tenant);
+
+  const res = NextResponse.next({ request: { headers: requestHeaders } });
 
   if (queryTenant && queryTenant !== cookieTenant) {
     res.cookies.set(TENANT_COOKIE, queryTenant, {
