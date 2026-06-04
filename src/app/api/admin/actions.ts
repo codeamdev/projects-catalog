@@ -330,6 +330,10 @@ export async function updateSettings(formData: FormData): Promise<ActionResult> 
       metaTitle: (formData.get("meta_title") as string) || null,
       metaDescription: (formData.get("meta_description") as string) || null,
       googleSiteVerification: (formData.get("google_site_verification") as string) || null,
+      instagramUrl: (formData.get("instagram_url") as string) || null,
+      facebookUrl: (formData.get("facebook_url") as string) || null,
+      tiktokUrl: (formData.get("tiktok_url") as string) || null,
+      youtubeUrl: (formData.get("youtube_url") as string) || null,
       footerText: (formData.get("footer_text") as string) || null,
       updatedAt: new Date(),
     };

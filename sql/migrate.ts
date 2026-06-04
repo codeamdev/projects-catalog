@@ -24,7 +24,7 @@ async function migrate() {
     await client.query(superAdminSql);
     console.log("✓ catalogo_public OK");
 
-    const migrationFiles = ["002_tenant_tables.sql", "003_add_discount.sql", "004_add_orders.sql", "005_update_order_statuses.sql", "006_add_discount_code.sql", "008_inventory.sql", "009_hero_image_position.sql", "010_categories_style.sql", "011_settings_singleton.sql", "012_hero_mobile_media.sql", "013_tenant_active_dates.sql", "014_filter_groups.sql", "015_google_verification.sql"];
+    const migrationFiles = ["002_tenant_tables.sql", "003_add_discount.sql", "004_add_orders.sql", "005_update_order_statuses.sql", "006_add_discount_code.sql", "008_inventory.sql", "009_hero_image_position.sql", "010_categories_style.sql", "011_settings_singleton.sql", "012_hero_mobile_media.sql", "013_tenant_active_dates.sql", "014_filter_groups.sql", "015_google_verification.sql", "016_social_media.sql"];
 
     // Obtener tenants existentes de la DB para migrar todos
     const { rows: tenantRows } = await client.query(

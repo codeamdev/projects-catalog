@@ -37,6 +37,10 @@ interface Props {
     metaTitle: string;
     metaDescription: string;
     googleSiteVerification: string;
+    instagramUrl: string;
+    facebookUrl: string;
+    tiktokUrl: string;
+    youtubeUrl: string;
     footerText: string;
     discountCode: string;
     discountCodePercent: number | null;
@@ -260,6 +264,27 @@ export function SettingsClient({ defaults }: Props) {
               className={INPUT}
             />
           </div>
+
+          <h3 className="text-sm font-semibold text-gray-700 pt-2">Redes sociales</h3>
+          <p className="text-xs text-gray-400 -mt-2">Solo se muestran en el catálogo las redes que tengan URL configurada.</p>
+
+          <div>
+            <label className={LABEL}>Instagram</label>
+            <input name="instagram_url" defaultValue={defaults.instagramUrl} placeholder="https://instagram.com/tu_usuario" className={INPUT} />
+          </div>
+          <div>
+            <label className={LABEL}>Facebook</label>
+            <input name="facebook_url" defaultValue={defaults.facebookUrl} placeholder="https://facebook.com/tu_pagina" className={INPUT} />
+          </div>
+          <div>
+            <label className={LABEL}>TikTok</label>
+            <input name="tiktok_url" defaultValue={defaults.tiktokUrl} placeholder="https://tiktok.com/@tu_usuario" className={INPUT} />
+          </div>
+          <div>
+            <label className={LABEL}>YouTube</label>
+            <input name="youtube_url" defaultValue={defaults.youtubeUrl} placeholder="https://youtube.com/@tu_canal" className={INPUT} />
+          </div>
+
           <div>
             <label className={LABEL}>Texto del footer</label>
             <input name="footer_text" defaultValue={defaults.footerText} className={INPUT} />
