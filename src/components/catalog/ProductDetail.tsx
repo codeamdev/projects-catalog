@@ -11,6 +11,26 @@ interface Props {
   product: ProductWithRelations;
 }
 
+function renderDescription(desc: string) {
+  const lines = desc.split("\n").map((l) => l.trim()).filter(Boolean);
+  if (lines.length >= 3 && lines.every((l) => l.length <= 40)) {
+    return (
+      <div className="flex flex-wrap gap-2 mb-7">
+        {lines.map((line, i) => (
+          <span key={i} className="bg-gray-50 text-gray-600 text-sm px-3 py-1.5 rounded-full border border-gray-100">
+            {line}
+          </span>
+        ))}
+      </div>
+    );
+  }
+  return (
+    <p className="text-gray-600 leading-relaxed whitespace-pre-line mb-7 text-base">
+      {desc}
+    </p>
+  );
+}
+
 export function ProductDetail({ product }: Props) {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -185,11 +205,7 @@ export function ProductDetail({ product }: Props) {
               </div>
             )}
 
-            {product.description && (
-              <p className="text-gray-600 leading-relaxed whitespace-pre-line mb-7 text-base sm:text-lg">
-                {product.description}
-              </p>
-            )}
+            {product.description && renderDescription(product.description)}
 
             {product.tags.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-6">

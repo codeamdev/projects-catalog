@@ -53,9 +53,13 @@ function StoriesFilter({ categories, activeCategory, filterBy }: FilterProps) {
           const color = pick(P_MODERN, cat.name);
           return (
             <button key={cat.id} onClick={() => filterBy(cat.slug)} className="flex flex-col items-center gap-1.5 flex-shrink-0 group">
-              <div className={`w-14 h-14 rounded-full flex items-center justify-center text-sm font-bold text-white transition-all ${isActive ? "ring-2 ring-offset-2 scale-105" : "opacity-60 group-hover:opacity-100 group-hover:scale-105"}`}
-                style={{ backgroundColor: color }}>
-                {cat.name.slice(0, 2).toUpperCase()}
+              <div className={`w-14 h-14 rounded-full overflow-hidden flex items-center justify-center text-sm font-bold text-white transition-all ${isActive ? "ring-2 ring-offset-2 scale-105" : "opacity-60 group-hover:opacity-100 group-hover:scale-105"}`}
+                style={cat.imageUrl ? undefined : { backgroundColor: color }}>
+                {cat.imageUrl ? (
+                  <img src={cat.imageUrl} alt={cat.name} className="w-full h-full object-cover" />
+                ) : (
+                  cat.name.slice(0, 2).toUpperCase()
+                )}
               </div>
               <span className={`text-[10px] max-w-[56px] text-center truncate ${isActive ? "text-gray-900 font-semibold" : "text-gray-400 font-medium"}`}>{cat.name}</span>
             </button>

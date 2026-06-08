@@ -1,8 +1,9 @@
 import { auth } from "@/lib/auth";
 import { withTenantDb } from "@/db";
 import { categories } from "@/db/tenant-schema";
-import { createCategory, deleteCategory } from "@/app/api/admin/actions";
+import { createCategory, deleteCategory, updateCategoryImage } from "@/app/api/admin/actions";
 import { DeleteCategoryButton } from "@/components/admin/DeleteCategoryButton";
+import { CategoryImageButton } from "@/components/admin/CategoryImageButton";
 
 // Wrappers que devuelven void para compatibilidad con <form action>
 async function createCategoryAction(formData: FormData): Promise<void> {
@@ -60,7 +61,13 @@ export default async function CategoriesPage() {
                   <p className="text-sm font-medium text-gray-900">{cat.name}</p>
                   <p className="text-xs text-gray-400">{cat.slug}</p>
                 </div>
-                <DeleteCategoryButton deleteAction={deleteCategory.bind(null, cat.id)} />
+                <div className="flex items-center gap-4">
+                  <CategoryImageButton
+                    imageUrl={cat.imageUrl ?? null}
+                    updateAction={updateCategoryImage.bind(null, cat.id)}
+                  />
+                  <DeleteCategoryButton deleteAction={deleteCategory.bind(null, cat.id)} />
+                </div>
               </li>
             ))}
           </ul>

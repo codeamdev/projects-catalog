@@ -20,6 +20,7 @@ export const categories = pgTable("categories", {
   name: text("name").notNull(),
   slug: text("slug").unique().notNull(),
   order: integer("order").default(0).notNull(),
+  imageUrl: text("image_url"),
 });
 
 export const products = pgTable(

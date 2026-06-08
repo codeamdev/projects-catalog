@@ -33,7 +33,7 @@ export default async function ProductPage({
   if (!product) notFound();
 
   return (
-    <section className="max-w-5xl mx-auto px-4 py-10">
+    <section className="max-w-5xl mx-auto px-4 pt-24 pb-10">
       <ProductDetail product={product} />
     </section>
   );

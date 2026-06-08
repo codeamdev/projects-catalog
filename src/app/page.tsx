@@ -27,6 +27,9 @@ export async function generateMetadata(): Promise<Metadata> {
     ...(s?.googleSiteVerification && {
       verification: { google: s.googleSiteVerification },
     }),
+    ...(tenant.logoUrl && {
+      icons: { icon: tenant.logoUrl },
+    }),
   };
 }
 
@@ -130,10 +133,10 @@ export default async function Home({
       style={{ "--primary": tenant.primaryColor } as React.CSSProperties}
     >
       {/* Navbar flotante y transparente sobre el hero */}
-      <header className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 sm:px-6 h-14">
+      <header className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 sm:px-6 h-20">
         <Link href="/">
           {tenant.logoUrl ? (
-            <img src={tenant.logoUrl} alt={tenant.name} className="h-8 w-auto object-contain drop-shadow-md" />
+            <img src={tenant.logoUrl} alt={tenant.name} className="h-16 w-auto object-contain drop-shadow-md" />
           ) : (
             <span className="text-base font-bold text-white drop-shadow-md tracking-tight">
               {tenant.name}

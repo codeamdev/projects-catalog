@@ -284,6 +284,23 @@ export async function deleteCategory(categoryId: string): Promise<ActionResult> 
   }
 }
 
+export async function updateCategoryImage(
+  categoryId: string,
+  imageUrl: string | null
+): Promise<ActionResult> {
+  try {
+    const session = await requireRole("ADMIN");
+    await withTenantDb(session.user.schemaName, (db) =>
+      db.update(categories).set({ imageUrl }).where(eq(categories.id, categoryId))
+    );
+    revalidatePath("/admin/categories");
+    revalidatePath("/");
+    return { ok: true, data: undefined };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Error al actualizar imagen" };
+  }
+}
+
 // ── Pedidos ───────────────────────────────────────────────────────
 
 export async function updateOrderStatus(
