@@ -28,7 +28,7 @@ async function processImage(buffer: Buffer, isGif: boolean): Promise<{ data: Buf
 
   const data = await sharp(buffer)
     .resize({ width: 1920, withoutEnlargement: true })
-    .webp({ quality: 82 })
+    .webp({ quality: 90 })
     .toBuffer();
 
   return { data, ext: "webp" };
