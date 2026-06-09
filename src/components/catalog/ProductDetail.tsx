@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { ShoppingCart, ArrowLeft, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { useCart } from "@/store/cart";
@@ -32,6 +32,7 @@ function renderDescription(desc: string) {
 }
 
 export function ProductDetail({ product }: Props) {
+  const router = useRouter();
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
@@ -89,13 +90,13 @@ export function ProductDetail({ product }: Props) {
     <div className="min-h-screen bg-white">
       <div className="max-w-screen-xl mx-auto px-4 py-8">
         {/* Volver */}
-        <Link
-          href="/"
+        <button
+          onClick={() => router.back()}
           className="inline-flex items-center gap-1.5 text-gray-400 hover:text-gray-700 text-sm mb-8 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Volver al catálogo
-        </Link>
+        </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
           {/* ── Galería ── */}
