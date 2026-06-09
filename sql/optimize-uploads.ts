@@ -23,11 +23,11 @@ import { Pool } from "pg";
 
 const DRY_RUN = process.argv.includes("--dry-run");
 const UPLOADS_DIR = join(process.cwd(), "public", "uploads");
-const QUALITY = 82;
+const QUALITY = 90;
 const MAX_WIDTH = 1920;
 
-const CONVERTIBLE = new Set([".jpg", ".jpeg", ".png", ".avif"]);
-const SKIP_EXT    = new Set([".gif", ".mp4", ".webm", ".ogv", ".mov", ".webp"]);
+const CONVERTIBLE = new Set([".jpg", ".jpeg", ".png", ".avif", ".webp"]);
+const SKIP_EXT    = new Set([".gif", ".mp4", ".webm", ".ogv", ".mov"]);
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL! });
 
