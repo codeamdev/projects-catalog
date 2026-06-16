@@ -452,8 +452,6 @@ export function ProductGrid({
     return result;
   }, [products, search, activeFilters, filterGroups, productFilterMap, orden]);
 
-  const [heroProduct, ...rest] = filtered;
-  const heroIsWide = !!heroProduct?.featured;
   const FilterComponent = STYLE_MAP[categoriesStyle] ?? StoriesFilter;
   const hasFacets = filterGroups.length > 0;
 
@@ -592,14 +590,15 @@ export function ProductGrid({
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-            {heroProduct && (
-              <div className={heroIsWide ? "col-span-2" : ""}>
-                <ProductCard product={heroProduct} whatsapp={whatsapp} variant={heroIsWide ? "hero" : "regular"} />
-              </div>
+            {filtered.map((product) =>
+              product.featured ? (
+                <div key={product.id} className="col-span-2">
+                  <ProductCard product={product} whatsapp={whatsapp} variant="hero" />
+                </div>
+              ) : (
+                <ProductCard key={product.id} product={product} whatsapp={whatsapp} />
+              )
             )}
-            {rest.map((product) => (
-              <ProductCard key={product.id} product={product} whatsapp={whatsapp} />
-            ))}
           </div>
         )}
       </div>
