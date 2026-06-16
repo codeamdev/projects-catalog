@@ -9,6 +9,7 @@ import { HeroBanner } from "@/components/catalog/HeroBanner";
 import { ProductGrid } from "@/components/catalog/ProductGrid";
 import { CartButton } from "@/components/cart/CartButton";
 import { CartDrawer } from "@/components/cart/CartDrawer";
+import { WhatsAppButton } from "@/components/catalog/WhatsAppButton";
 
 export async function generateMetadata(): Promise<Metadata> {
   const tenant = await getCurrentTenant();
@@ -233,6 +234,7 @@ export default async function Home({
         </div>
       </footer>
 
+      {tenant.whatsappNumber && <WhatsAppButton whatsappNumber={tenant.whatsappNumber} />}
       <CartButton />
       <CartDrawer
         tenantName={tenant.name}
