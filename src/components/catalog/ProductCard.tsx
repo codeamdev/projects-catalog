@@ -56,14 +56,14 @@ export function ProductCard({ product, whatsapp, variant = "regular" }: Props) {
       <div
         role="article"
         onClick={() => router.push(`/product/${product.slug}`)}
-        className="relative rounded-2xl sm:rounded-3xl overflow-hidden bg-gray-900 group cursor-pointer aspect-[4/3] sm:aspect-[21/9]"
+        className="relative rounded-2xl overflow-hidden bg-gray-900 group cursor-pointer aspect-[4/3]"
       >
         {mainImage && (
           <Image
             src={mainImage.url}
             alt={mainImage.alt || product.title}
             fill
-            sizes="100vw"
+            sizes="(max-width: 640px) 100vw, 50vw"
             className="object-cover transition-transform duration-700 group-hover:scale-105"
             priority
           />

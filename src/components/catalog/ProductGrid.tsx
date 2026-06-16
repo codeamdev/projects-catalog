@@ -593,7 +593,7 @@ export function ProductGrid({
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
             {heroProduct && (
-              <div className={heroIsWide ? "col-span-2 sm:col-span-4" : ""}>
+              <div className={heroIsWide ? "col-span-2" : ""}>
                 <ProductCard product={heroProduct} whatsapp={whatsapp} variant={heroIsWide ? "hero" : "regular"} />
               </div>
             )}
