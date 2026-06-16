@@ -16,12 +16,10 @@ COPY . .
 
 # Variables necesarias solo en build time
 ARG NEXT_PUBLIC_ROOT_DOMAIN
+RUN test -n "$NEXT_PUBLIC_ROOT_DOMAIN" || { echo "ERROR: NEXT_PUBLIC_ROOT_DOMAIN no está definido. Usá: docker compose --env-file .env.production build"; exit 1; }
 ENV NEXT_PUBLIC_ROOT_DOMAIN=$NEXT_PUBLIC_ROOT_DOMAIN
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# build incluye npx tsx sql/migrate.ts (definido en package.json scripts.build)
-# Para producción se corre la migración por separado con db:migrate:prod
-# Aquí solo compilamos Next.js
 RUN npx next build
 
 # ── Etapa 3: runner ───────────────────────────────────────────────
