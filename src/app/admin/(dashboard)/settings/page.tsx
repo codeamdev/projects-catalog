@@ -56,6 +56,7 @@ export default async function SettingsPage() {
         whyChooseHeadline: s?.whyChooseHeadline ?? "",
         whyChooseDescription: s?.whyChooseDescription ?? "",
         whyChooseItems: parseWhyItems(s?.whyChooseItems),
+        whyChooseIconStyle: s?.whyChooseIconStyle ?? "outline",
         footerBgColor: s?.footerBgColor ?? "#f9fafb",
       }}
     />

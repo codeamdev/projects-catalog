@@ -462,8 +462,9 @@ export async function updateWhyChooseUs(formData: FormData): Promise<ActionResul
     }
 
     const whyChooseEnabled = formData.get("why_choose_enabled") === "1";
+    const whyChooseIconStyle = (formData.get("why_choose_icon_style") as string) || "outline";
 
-    const vals = { whyChooseEnabled, whyChooseTitle: title, whyChooseHeadline: headline, whyChooseDescription: description, whyChooseItems, updatedAt: new Date() };
+    const vals = { whyChooseEnabled, whyChooseTitle: title, whyChooseHeadline: headline, whyChooseDescription: description, whyChooseItems, whyChooseIconStyle, updatedAt: new Date() };
     await withTenantDb(schema, (db) =>
       db.insert(settings)
         .values({ singleton: true, ...vals })

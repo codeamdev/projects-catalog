@@ -203,6 +203,7 @@ export default async function Home({
             headline={s?.whyChooseHeadline || "La mejor experiencia de compra"}
             description={s?.whyChooseDescription || undefined}
             items={whyItems}
+            iconStyle={s?.whyChooseIconStyle ?? "outline"}
           />
         )}
       </main>

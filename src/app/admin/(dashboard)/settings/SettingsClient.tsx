@@ -7,6 +7,7 @@ import { ImageUpload } from "@/components/admin/ImageUpload";
 import { MultiImageUpload } from "@/components/admin/MultiImageUpload";
 import { VideoUpload } from "@/components/admin/VideoUpload";
 import { updateSettings, updateTenantConfig, updateDiscountCode, updateWhyChooseUs, updateFooterColor } from "@/app/api/admin/actions";
+import { WHY_ICONS } from "@/components/catalog/WhyChooseUs";
 
 const INPUT = "w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300";
 const LABEL = "block text-sm font-medium text-gray-700 mb-1";
@@ -58,6 +59,7 @@ interface Props {
     whyChooseHeadline: string;
     whyChooseDescription: string;
     whyChooseItems: WhyItem[];
+    whyChooseIconStyle: string;
     footerBgColor: string;
   };
 }
@@ -87,8 +89,9 @@ export function SettingsClient({ defaults }: Props) {
   const [catStyle, setCatStyle] = useState(defaults.categoriesStyle ?? "stories");
   const [catStylePending, startCatStyle] = useTransition();
 
-  const EMPTY_ITEM: WhyItem = { icon: "", title: "", description: "" };
+  const EMPTY_ITEM: WhyItem = { icon: "star", title: "", description: "" };
   const [whyEnabled, setWhyEnabled] = useState(defaults.whyChooseEnabled);
+  const [whyIconStyle, setWhyIconStyle] = useState(defaults.whyChooseIconStyle ?? "outline");
   const [whyItems, setWhyItems] = useState<WhyItem[]>(
     defaults.whyChooseItems.length > 0 ? defaults.whyChooseItems : [EMPTY_ITEM]
   );
@@ -101,6 +104,7 @@ export function SettingsClient({ defaults }: Props) {
     const validItems = whyItems.filter((it) => it.title.trim());
     fd.set("why_choose_items", JSON.stringify(validItems));
     fd.set("why_choose_enabled", whyEnabled ? "1" : "0");
+    fd.set("why_choose_icon_style", whyIconStyle);
     startWhy(async () => {
       const result = await updateWhyChooseUs(fd);
       if (result.ok) toast.success("Sección guardada");
@@ -447,6 +451,32 @@ export function SettingsClient({ defaults }: Props) {
             />
           </div>
 
+          {/* Estilo de íconos */}
+          <div>
+            <label className={LABEL}>Estilo de íconos</label>
+            <div className="flex gap-2 flex-wrap">
+              {[
+                { id: "outline", label: "Líneas finas", desc: "Minimalista" },
+                { id: "bold",    label: "Líneas gruesas", desc: "Más visible" },
+                { id: "circle",  label: "Círculo relleno", desc: "Con color de marca" },
+              ].map(({ id, label, desc }) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setWhyIconStyle(id)}
+                  className={`flex-1 min-w-[130px] px-4 py-3 rounded-xl border-2 text-sm transition-all text-left ${
+                    whyIconStyle === id
+                      ? "border-indigo-500 bg-indigo-50 text-indigo-800"
+                      : "border-gray-200 text-gray-600 hover:border-gray-300"
+                  }`}
+                >
+                  <span className="font-semibold block">{label}</span>
+                  <span className="text-xs opacity-70">{desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <label className={`${LABEL} mb-0`}>Razones (hasta 4)</label>
@@ -475,39 +505,35 @@ export function SettingsClient({ defaults }: Props) {
                     </button>
                   )}
                 </div>
-                <div className="grid grid-cols-[1fr] gap-3">
-                  <div>
-                    <label className={LABEL}>Ícono</label>
-                    <div className="flex gap-2 items-center">
-                      <span className="text-3xl leading-none">{item.icon}</span>
-                      <select
-                        value={item.icon}
-                        onChange={(e) => setWhyItems(whyItems.map((it, j) => j === i ? { ...it, icon: e.target.value } : it))}
-                        className={INPUT}
+                <div>
+                  <label className={LABEL}>Ícono</label>
+                  <div className="grid grid-cols-[repeat(auto-fill,minmax(60px,1fr))] gap-1.5 p-3 bg-white rounded-xl border border-gray-200">
+                    {Object.entries(WHY_ICONS).map(([name, { label, Icon }]) => (
+                      <button
+                        key={name}
+                        type="button"
+                        title={label}
+                        onClick={() => setWhyItems(whyItems.map((it, j) => j === i ? { ...it, icon: name } : it))}
+                        className={`flex flex-col items-center gap-1 py-2 px-1 rounded-lg transition-all ${
+                          item.icon === name
+                            ? "bg-indigo-100 text-indigo-700 ring-2 ring-indigo-400"
+                            : "hover:bg-gray-100 text-gray-500"
+                        }`}
                       >
-                        {[
-                          ["🌸","Flor"],["✨","Destellos"],["🚚","Envío"],["💎","Diamante"],
-                          ["⭐","Estrella"],["🏆","Trofeo"],["🎁","Regalo"],["🛡️","Escudo"],
-                          ["🤝","Apretón"],["❤️","Corazón"],["🌿","Hoja"],["👑","Corona"],
-                          ["💫","Chispa"],["🔮","Bola mágica"],["🕯️","Vela"],["🌺","Hibisco"],
-                          ["💝","Corazón lazo"],["🎯","Diana"],["💯","100"],["✅","Check"],
-                          ["🌟","Estrella brillante"],["⚜️","Flor de lis"],["🪭","Abanico"],["🌙","Luna"],
-                          ["🛒","Carrito"],["🎀","Moño"],["🌈","Arcoíris"],["🦋","Mariposa"],
-                        ].map(([emoji, label]) => (
-                          <option key={emoji} value={emoji}>{emoji} {label}</option>
-                        ))}
-                      </select>
-                    </div>
+                        <Icon size={18} strokeWidth={1.5} />
+                        <span className="text-[9px] leading-tight text-center truncate w-full">{label}</span>
+                      </button>
+                    ))}
                   </div>
-                  <div>
-                    <label className={LABEL}>Título *</label>
-                    <input
-                      value={item.title}
-                      onChange={(e) => setWhyItems(whyItems.map((it, j) => j === i ? { ...it, title: e.target.value } : it))}
-                      placeholder="Envío rápido"
-                      className={INPUT}
-                    />
-                  </div>
+                </div>
+                <div>
+                  <label className={LABEL}>Título *</label>
+                  <input
+                    value={item.title}
+                    onChange={(e) => setWhyItems(whyItems.map((it, j) => j === i ? { ...it, title: e.target.value } : it))}
+                    placeholder="Envío rápido"
+                    className={INPUT}
+                  />
                 </div>
                 <div>
                   <label className={LABEL}>Descripción</label>
