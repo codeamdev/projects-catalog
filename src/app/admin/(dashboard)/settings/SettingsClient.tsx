@@ -454,25 +454,26 @@ export function SettingsClient({ defaults }: Props) {
                 <div className="grid grid-cols-[1fr] gap-3">
                   <div>
                     <label className={LABEL}>Ícono</label>
-                    <div className="flex flex-wrap gap-1.5 mb-2">
-                      {["🌸","✨","🚚","💎","⭐","🏆","🎁","🛡️","🤝","❤️","🌿","👑","💫","🔮","🕯️","🌺","💝","🎯","💯","✅","🌟","⚜️","🪭","🌙"].map((emoji) => (
-                        <button
-                          key={emoji}
-                          type="button"
-                          onClick={() => setWhyItems(whyItems.map((it, j) => j === i ? { ...it, icon: emoji } : it))}
-                          className={`w-9 h-9 text-xl rounded-lg border-2 transition-all hover:scale-110 ${item.icon === emoji ? "border-indigo-500 bg-indigo-50 scale-110" : "border-gray-100 bg-gray-50 hover:border-gray-300"}`}
-                        >
-                          {emoji}
-                        </button>
-                      ))}
+                    <div className="flex gap-2 items-center">
+                      <span className="text-3xl leading-none">{item.icon}</span>
+                      <select
+                        value={item.icon}
+                        onChange={(e) => setWhyItems(whyItems.map((it, j) => j === i ? { ...it, icon: e.target.value } : it))}
+                        className={INPUT}
+                      >
+                        {[
+                          ["🌸","Flor"],["✨","Destellos"],["🚚","Envío"],["💎","Diamante"],
+                          ["⭐","Estrella"],["🏆","Trofeo"],["🎁","Regalo"],["🛡️","Escudo"],
+                          ["🤝","Apretón"],["❤️","Corazón"],["🌿","Hoja"],["👑","Corona"],
+                          ["💫","Chispa"],["🔮","Bola mágica"],["🕯️","Vela"],["🌺","Hibisco"],
+                          ["💝","Corazón lazo"],["🎯","Diana"],["💯","100"],["✅","Check"],
+                          ["🌟","Estrella brillante"],["⚜️","Flor de lis"],["🪭","Abanico"],["🌙","Luna"],
+                          ["🛒","Carrito"],["🎀","Moño"],["🌈","Arcoíris"],["🦋","Mariposa"],
+                        ].map(([emoji, label]) => (
+                          <option key={emoji} value={emoji}>{emoji} {label}</option>
+                        ))}
+                      </select>
                     </div>
-                    <input
-                      value={item.icon}
-                      onChange={(e) => setWhyItems(whyItems.map((it, j) => j === i ? { ...it, icon: e.target.value } : it))}
-                      placeholder="O escribí cualquier emoji"
-                      className={`${INPUT} text-lg`}
-                      maxLength={4}
-                    />
                   </div>
                   <div>
                     <label className={LABEL}>Título *</label>
