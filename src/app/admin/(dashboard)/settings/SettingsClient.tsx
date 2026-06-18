@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { ImageUpload } from "@/components/admin/ImageUpload";
 import { MultiImageUpload } from "@/components/admin/MultiImageUpload";
 import { VideoUpload } from "@/components/admin/VideoUpload";
-import { updateSettings, updateTenantConfig, updateDiscountCode } from "@/app/api/admin/actions";
+import { updateSettings, updateTenantConfig, updateDiscountCode, updateWhyChooseUs } from "@/app/api/admin/actions";
 
 const INPUT = "w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300";
 const LABEL = "block text-sm font-medium text-gray-700 mb-1";
@@ -24,6 +24,12 @@ const CAT_STYLES = [
   { id: "outline", name: "Océano",    desc: "Paleta de azules y turquesas" },
   { id: "compact", name: "Candy",     desc: "Caramelos brillantes y divertidos" },
 ] as const;
+
+interface WhyItem {
+  icon: string;
+  title: string;
+  description: string;
+}
 
 interface Props {
   defaults: {
@@ -47,6 +53,8 @@ interface Props {
     logoUrl: string | null;
     whatsappNumber: string;
     primaryColor: string;
+    whyChooseTitle: string;
+    whyChooseItems: WhyItem[];
   };
 }
 
@@ -74,6 +82,24 @@ export function SettingsClient({ defaults }: Props) {
 
   const [catStyle, setCatStyle] = useState(defaults.categoriesStyle ?? "stories");
   const [catStylePending, startCatStyle] = useTransition();
+
+  const EMPTY_ITEM: WhyItem = { icon: "", title: "", description: "" };
+  const [whyItems, setWhyItems] = useState<WhyItem[]>(
+    defaults.whyChooseItems.length > 0 ? defaults.whyChooseItems : [EMPTY_ITEM]
+  );
+  const [whyPending, startWhy] = useTransition();
+
+  function handleWhy(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const validItems = whyItems.filter((it) => it.title.trim());
+    fd.set("why_choose_items", JSON.stringify(validItems));
+    startWhy(async () => {
+      const result = await updateWhyChooseUs(fd);
+      if (result.ok) toast.success("Sección guardada");
+      else toast.error(result.error);
+    });
+  }
 
   function handleTenant(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -342,6 +368,97 @@ export function SettingsClient({ defaults }: Props) {
             className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-indigo-700 disabled:opacity-60 transition-colors"
           >
             {discountPending ? "Guardando…" : "Guardar código de descuento"}
+          </button>
+        </form>
+      </section>
+
+      {/* ── ¿Por qué elegirnos? ── */}
+      <section className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
+        <div>
+          <h2 className="text-base font-semibold text-gray-900">¿Por qué elegirnos?</h2>
+          <p className="text-xs text-gray-400 mt-0.5">
+            Sección opcional que aparece entre el catálogo y el footer. Dejá vacío para ocultarla.
+          </p>
+        </div>
+        <form onSubmit={handleWhy} className="space-y-5">
+          <div>
+            <label className={LABEL}>Título de la sección</label>
+            <input
+              name="why_choose_title"
+              defaultValue={defaults.whyChooseTitle}
+              placeholder="¿Por qué elegirnos?"
+              className={INPUT}
+            />
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className={`${LABEL} mb-0`}>Razones (hasta 4)</label>
+              {whyItems.length < 4 && (
+                <button
+                  type="button"
+                  onClick={() => setWhyItems([...whyItems, EMPTY_ITEM])}
+                  className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                >
+                  + Agregar razón
+                </button>
+              )}
+            </div>
+
+            {whyItems.map((item, i) => (
+              <div key={i} className="rounded-xl border border-gray-100 bg-gray-50 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-gray-500">Razón {i + 1}</span>
+                  {whyItems.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => setWhyItems(whyItems.filter((_, j) => j !== i))}
+                      className="text-xs text-red-400 hover:text-red-600"
+                    >
+                      Quitar
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-[80px_1fr] gap-3">
+                  <div>
+                    <label className={LABEL}>Ícono</label>
+                    <input
+                      value={item.icon}
+                      onChange={(e) => setWhyItems(whyItems.map((it, j) => j === i ? { ...it, icon: e.target.value } : it))}
+                      placeholder="🚀"
+                      className={`${INPUT} text-2xl text-center`}
+                      maxLength={4}
+                    />
+                  </div>
+                  <div>
+                    <label className={LABEL}>Título *</label>
+                    <input
+                      value={item.title}
+                      onChange={(e) => setWhyItems(whyItems.map((it, j) => j === i ? { ...it, title: e.target.value } : it))}
+                      placeholder="Envío rápido"
+                      className={INPUT}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className={LABEL}>Descripción</label>
+                  <input
+                    value={item.description}
+                    onChange={(e) => setWhyItems(whyItems.map((it, j) => j === i ? { ...it, description: e.target.value } : it))}
+                    placeholder="Recibís tu pedido en 24-48 horas hábiles"
+                    className={INPUT}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <button
+            type="submit"
+            disabled={whyPending}
+            className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-indigo-700 disabled:opacity-60 transition-colors"
+          >
+            {whyPending ? "Guardando…" : "Guardar sección"}
           </button>
         </form>
       </section>

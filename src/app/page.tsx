@@ -7,6 +7,7 @@ import { withTenantDb } from "@/db";
 import { settings } from "@/db/tenant-schema";
 import { HeroBanner } from "@/components/catalog/HeroBanner";
 import { ProductGrid } from "@/components/catalog/ProductGrid";
+import { WhyChooseUs } from "@/components/catalog/WhyChooseUs";
 import { CartButton } from "@/components/cart/CartButton";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { WhatsAppButton } from "@/components/catalog/WhatsAppButton";
@@ -128,6 +129,12 @@ export default async function Home({
     ? allProducts.filter((p) => p.category?.slug === categoria && p.active !== false)
     : allProducts.filter((p) => p.active !== false);
 
+  // ── ¿Por qué elegirnos? ──────────────────────────────────────
+  let whyItems: { icon: string; title: string; description: string }[] = [];
+  try {
+    if (s?.whyChooseItems) whyItems = JSON.parse(s.whyChooseItems);
+  } catch { /* */ }
+
   return (
     <div
       className="min-h-screen bg-white"
@@ -175,6 +182,13 @@ export default async function Home({
             categoriesStyle={(s?.categoriesStyle as import("@/components/catalog/ProductGrid").CatStyle) ?? "stories"}
           />
         </section>
+
+        {whyItems.length > 0 && (
+          <WhyChooseUs
+            title={s?.whyChooseTitle || "¿Por qué elegirnos?"}
+            items={whyItems}
+          />
+        )}
       </main>
 
       <footer className="mt-10 border-t border-gray-100 bg-gray-50 py-10">

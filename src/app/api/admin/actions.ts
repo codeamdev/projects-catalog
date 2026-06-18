@@ -441,6 +441,39 @@ export async function updateTenantConfig(formData: FormData): Promise<ActionResu
   }
 }
 
+// ── Sección "¿Por qué elegirnos?" ────────────────────────────────
+
+export async function updateWhyChooseUs(formData: FormData): Promise<ActionResult> {
+  try {
+    const session = await requireRole("ADMIN");
+    const schema = session.user.schemaName;
+
+    const title = (formData.get("why_choose_title") as string)?.trim() || null;
+    const itemsRaw = formData.get("why_choose_items") as string | null;
+
+    let whyChooseItems: string | null = null;
+    if (itemsRaw) {
+      try {
+        const parsed = JSON.parse(itemsRaw);
+        if (Array.isArray(parsed) && parsed.length > 0) whyChooseItems = itemsRaw;
+      } catch { /* inválido — ignorar */ }
+    }
+
+    const vals = { whyChooseTitle: title, whyChooseItems, updatedAt: new Date() };
+    await withTenantDb(schema, (db) =>
+      db.insert(settings)
+        .values({ singleton: true, ...vals })
+        .onConflictDoUpdate({ target: settings.singleton, set: vals })
+    );
+
+    revalidatePath("/");
+    revalidatePath("/admin/settings");
+    return { ok: true, data: undefined };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Error al guardar sección" };
+  }
+}
+
 // ── Filtros ───────────────────────────────────────────────────────
 
 export async function createFilterGroup(formData: FormData): Promise<ActionResult> {

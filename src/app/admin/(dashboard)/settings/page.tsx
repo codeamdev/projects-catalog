@@ -5,6 +5,15 @@ import { tenants } from "@/db/public-schema";
 import { eq } from "drizzle-orm";
 import { SettingsClient } from "./SettingsClient";
 
+function parseWhyItems(raw: string | null | undefined) {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed;
+  } catch { /* */ }
+  return [];
+}
+
 export default async function SettingsPage() {
   const session = await auth();
 
@@ -42,6 +51,8 @@ export default async function SettingsPage() {
         logoUrl: tenant?.logoUrl ?? null,
         whatsappNumber: tenant?.whatsappNumber ?? "",
         primaryColor: tenant?.primaryColor ?? "#1a1a1a",
+        whyChooseTitle: s?.whyChooseTitle ?? "¿Por qué elegirnos?",
+        whyChooseItems: parseWhyItems(s?.whyChooseItems),
       }}
     />
   );
