@@ -451,14 +451,26 @@ export function SettingsClient({ defaults }: Props) {
                     </button>
                   )}
                 </div>
-                <div className="grid grid-cols-[80px_1fr] gap-3">
+                <div className="grid grid-cols-[1fr] gap-3">
                   <div>
                     <label className={LABEL}>Ícono</label>
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {["🌸","✨","🚚","💎","⭐","🏆","🎁","🛡️","🤝","❤️","🌿","👑","💫","🔮","🕯️","🌺","💝","🎯","💯","✅","🌟","⚜️","🪭","🌙"].map((emoji) => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          onClick={() => setWhyItems(whyItems.map((it, j) => j === i ? { ...it, icon: emoji } : it))}
+                          className={`w-9 h-9 text-xl rounded-lg border-2 transition-all hover:scale-110 ${item.icon === emoji ? "border-indigo-500 bg-indigo-50 scale-110" : "border-gray-100 bg-gray-50 hover:border-gray-300"}`}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
                     <input
                       value={item.icon}
                       onChange={(e) => setWhyItems(whyItems.map((it, j) => j === i ? { ...it, icon: e.target.value } : it))}
-                      placeholder="🚀"
-                      className={`${INPUT} text-2xl text-center`}
+                      placeholder="O escribí cualquier emoji"
+                      className={`${INPUT} text-lg`}
                       maxLength={4}
                     />
                   </div>
@@ -471,7 +483,6 @@ export function SettingsClient({ defaults }: Props) {
                       className={INPUT}
                     />
                   </div>
-                </div>
                 <div>
                   <label className={LABEL}>Descripción</label>
                   <input

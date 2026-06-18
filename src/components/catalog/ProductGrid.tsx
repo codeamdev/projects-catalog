@@ -41,27 +41,31 @@ function StoriesFilter({ categories, activeCategory, filterBy }: FilterProps) {
     <div className="relative mb-3">
       <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-white to-transparent z-10" />
       <div className="no-scrollbar flex gap-3 sm:gap-4 overflow-x-auto px-1 py-4">
-        <button onClick={() => filterBy()} className="flex flex-col items-center gap-1.5 flex-shrink-0 group">
-          <div className={`w-14 h-14 rounded-full flex items-center justify-center text-base font-bold transition-all ${!activeCategory ? "ring-2 ring-offset-2 scale-105" : "bg-gray-100 group-hover:bg-gray-200"}`}
+        <button onClick={() => filterBy()} className="flex flex-col items-center gap-1 flex-shrink-0 group">
+          <div className={`w-14 h-14 rounded-full flex items-center justify-center text-base font-bold transition-all ${!activeCategory ? "ring-[3px] ring-offset-2 ring-gray-900 scale-110 shadow-md" : "bg-gray-100 group-hover:bg-gray-200"}`}
             style={!activeCategory ? { backgroundColor: "var(--primary)" } : undefined}>
             <span className={!activeCategory ? "text-white" : "text-gray-500"}>✦</span>
           </div>
-          <span className={`text-[10px] font-medium ${!activeCategory ? "text-gray-900 font-semibold" : "text-gray-400"}`}>Todos</span>
+          <span className={`text-[10px] font-medium ${!activeCategory ? "text-gray-900 font-bold" : "text-gray-400"}`}>Todos</span>
+          <div className={`h-1 w-1 rounded-full transition-all ${!activeCategory ? "bg-gray-900" : "bg-transparent"}`} />
         </button>
         {categories.map((cat) => {
           const isActive = activeCategory === cat.slug;
           const color = pick(P_MODERN, cat.name);
           return (
-            <button key={cat.id} onClick={() => filterBy(cat.slug)} className="flex flex-col items-center gap-1.5 flex-shrink-0 group">
-              <div className={`w-14 h-14 rounded-full overflow-hidden flex items-center justify-center text-sm font-bold text-white transition-all ${isActive ? "ring-2 ring-offset-2 scale-105" : "group-hover:scale-105"}`}
-                style={cat.imageUrl ? undefined : { backgroundColor: color }}>
+            <button key={cat.id} onClick={() => filterBy(cat.slug)} className="flex flex-col items-center gap-1 flex-shrink-0 group">
+              <div
+                className={`w-14 h-14 rounded-full overflow-hidden flex items-center justify-center text-sm font-bold text-white transition-all ${isActive ? "ring-[3px] ring-offset-2 ring-gray-900 scale-110 shadow-md" : "group-hover:scale-105"}`}
+                style={cat.imageUrl ? undefined : { backgroundColor: color }}
+              >
                 {cat.imageUrl ? (
                   <img src={cat.imageUrl} alt={cat.name} className="w-full h-full object-cover" />
                 ) : (
                   cat.name.slice(0, 2).toUpperCase()
                 )}
               </div>
-              <span className={`text-[10px] max-w-[56px] text-center truncate ${isActive ? "text-gray-900 font-semibold" : "text-gray-400 font-medium"}`}>{cat.name}</span>
+              <span className={`text-[10px] max-w-[56px] text-center truncate ${isActive ? "text-gray-900 font-bold" : "text-gray-400 font-medium"}`}>{cat.name}</span>
+              <div className={`h-1 w-1 rounded-full transition-all ${isActive ? "bg-gray-900" : "bg-transparent"}`} />
             </button>
           );
         })}
