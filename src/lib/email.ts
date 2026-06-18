@@ -1,6 +1,10 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend(): Resend {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) throw new Error("RESEND_API_KEY no configurada");
+  return new Resend(key);
+}
 
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL ?? "no-reply@catalogo.app";
 const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "localhost:3000";
@@ -121,6 +125,7 @@ export async function sendWelcomeEmail(
   welcomePercent: number
 ): Promise<void> {
   if (!process.env.RESEND_API_KEY) return;
+  const resend = getResend();
   const campaign: CampaignData = {
     type: "welcome",
     subject: `¡Bienvenida/o a ${tenant.name}! 🎉`,
@@ -146,6 +151,7 @@ export async function sendCampaignEmails(
     return { sent: 0, failed: subscribers.length };
   }
 
+  const resend = getResend();
   const active = subscribers; // Already filtered to active on the caller side
   let sent = 0;
   let failed = 0;
