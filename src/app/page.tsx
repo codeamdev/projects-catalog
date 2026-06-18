@@ -183,7 +183,7 @@ export default async function Home({
           />
         </section>
 
-        {whyItems.length > 0 && (
+        {s?.whyChooseEnabled && whyItems.length > 0 && (
           <WhyChooseUs
             title={s?.whyChooseTitle || "¿Por qué elegirnos?"}
             items={whyItems}
@@ -191,7 +191,7 @@ export default async function Home({
         )}
       </main>
 
-      <footer className="mt-10 border-t border-gray-100 bg-gray-50 py-10">
+      <footer className="mt-10 border-t border-gray-100 py-10" style={{ backgroundColor: s?.footerBgColor ?? "#f9fafb" }}>
         <div className="max-w-screen-xl mx-auto px-4 text-center space-y-4">
 
           {/* Redes sociales — solo si hay al menos una URL */}

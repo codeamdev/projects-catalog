@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { ImageUpload } from "@/components/admin/ImageUpload";
 import { MultiImageUpload } from "@/components/admin/MultiImageUpload";
 import { VideoUpload } from "@/components/admin/VideoUpload";
-import { updateSettings, updateTenantConfig, updateDiscountCode, updateWhyChooseUs } from "@/app/api/admin/actions";
+import { updateSettings, updateTenantConfig, updateDiscountCode, updateWhyChooseUs, updateFooterColor } from "@/app/api/admin/actions";
 
 const INPUT = "w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300";
 const LABEL = "block text-sm font-medium text-gray-700 mb-1";
@@ -53,8 +53,10 @@ interface Props {
     logoUrl: string | null;
     whatsappNumber: string;
     primaryColor: string;
+    whyChooseEnabled: boolean;
     whyChooseTitle: string;
     whyChooseItems: WhyItem[];
+    footerBgColor: string;
   };
 }
 
@@ -84,19 +86,32 @@ export function SettingsClient({ defaults }: Props) {
   const [catStylePending, startCatStyle] = useTransition();
 
   const EMPTY_ITEM: WhyItem = { icon: "", title: "", description: "" };
+  const [whyEnabled, setWhyEnabled] = useState(defaults.whyChooseEnabled);
   const [whyItems, setWhyItems] = useState<WhyItem[]>(
     defaults.whyChooseItems.length > 0 ? defaults.whyChooseItems : [EMPTY_ITEM]
   );
   const [whyPending, startWhy] = useTransition();
+  const [footerPending, startFooter] = useTransition();
 
   function handleWhy(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const validItems = whyItems.filter((it) => it.title.trim());
     fd.set("why_choose_items", JSON.stringify(validItems));
+    fd.set("why_choose_enabled", whyEnabled ? "1" : "0");
     startWhy(async () => {
       const result = await updateWhyChooseUs(fd);
       if (result.ok) toast.success("Sección guardada");
+      else toast.error(result.error);
+    });
+  }
+
+  function handleFooter(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    startFooter(async () => {
+      const result = await updateFooterColor(fd);
+      if (result.ok) toast.success("Color del footer guardado");
       else toast.error(result.error);
     });
   }
@@ -381,6 +396,23 @@ export function SettingsClient({ defaults }: Props) {
           </p>
         </div>
         <form onSubmit={handleWhy} className="space-y-5">
+          {/* Toggle activar/desactivar */}
+          <label className="flex items-center justify-between gap-3 p-4 rounded-xl border border-gray-100 bg-gray-50 cursor-pointer">
+            <div>
+              <p className="text-sm font-medium text-gray-800">Mostrar sección en el catálogo</p>
+              <p className="text-xs text-gray-400 mt-0.5">Si está desactivada no se muestra, pero los datos se conservan</p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={whyEnabled}
+              onClick={() => setWhyEnabled(!whyEnabled)}
+              className={`relative flex-shrink-0 w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none ${whyEnabled ? "bg-indigo-600" : "bg-gray-300"}`}
+            >
+              <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${whyEnabled ? "translate-x-5" : "translate-x-0"}`} />
+            </button>
+          </label>
+
           <div>
             <label className={LABEL}>Título de la sección</label>
             <input
@@ -459,6 +491,35 @@ export function SettingsClient({ defaults }: Props) {
             className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-indigo-700 disabled:opacity-60 transition-colors"
           >
             {whyPending ? "Guardando…" : "Guardar sección"}
+          </button>
+        </form>
+      </section>
+
+      {/* ── Color del footer ── */}
+      <section className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
+        <div>
+          <h2 className="text-base font-semibold text-gray-900">Color del footer</h2>
+          <p className="text-xs text-gray-400 mt-0.5">Color de fondo de la sección inferior del catálogo</p>
+        </div>
+        <form onSubmit={handleFooter} className="space-y-4">
+          <div className="flex items-center gap-4">
+            <input
+              type="color"
+              name="footer_bg_color"
+              defaultValue={defaults.footerBgColor}
+              className="h-10 w-16 rounded-xl border border-gray-200 cursor-pointer p-1"
+            />
+            <div className="text-sm text-gray-500 space-y-0.5">
+              <p>Color actual: <span className="font-mono text-gray-700">{defaults.footerBgColor}</span></p>
+              <p className="text-xs text-gray-400">Tip: negro (#0f0f0f) combina bien con la sección oscura de arriba</p>
+            </div>
+          </div>
+          <button
+            type="submit"
+            disabled={footerPending}
+            className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-indigo-700 disabled:opacity-60 transition-colors"
+          >
+            {footerPending ? "Guardando…" : "Guardar color"}
           </button>
         </form>
       </section>

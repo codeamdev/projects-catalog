@@ -121,8 +121,10 @@ export const settings = pgTable("settings", {
   tiktokUrl: text("tiktok_url"),
   youtubeUrl: text("youtube_url"),
   inventoryEnabled: boolean("inventory_enabled").default(false).notNull(),
+  whyChooseEnabled: boolean("why_choose_enabled").default(false).notNull(),
   whyChooseTitle: text("why_choose_title"),
   whyChooseItems: text("why_choose_items"),
+  footerBgColor: text("footer_bg_color"),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (t) => [
   unique("settings_singleton_unique").on(t.singleton),

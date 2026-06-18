@@ -459,7 +459,9 @@ export async function updateWhyChooseUs(formData: FormData): Promise<ActionResul
       } catch { /* inválido — ignorar */ }
     }
 
-    const vals = { whyChooseTitle: title, whyChooseItems, updatedAt: new Date() };
+    const whyChooseEnabled = formData.get("why_choose_enabled") === "1";
+
+    const vals = { whyChooseEnabled, whyChooseTitle: title, whyChooseItems, updatedAt: new Date() };
     await withTenantDb(schema, (db) =>
       db.insert(settings)
         .values({ singleton: true, ...vals })
@@ -471,6 +473,25 @@ export async function updateWhyChooseUs(formData: FormData): Promise<ActionResul
     return { ok: true, data: undefined };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Error al guardar sección" };
+  }
+}
+
+export async function updateFooterColor(formData: FormData): Promise<ActionResult> {
+  try {
+    const session = await requireRole("ADMIN");
+    const schema = session.user.schemaName;
+    const footerBgColor = (formData.get("footer_bg_color") as string) || "#f9fafb";
+    const vals = { footerBgColor, updatedAt: new Date() };
+    await withTenantDb(schema, (db) =>
+      db.insert(settings)
+        .values({ singleton: true, ...vals })
+        .onConflictDoUpdate({ target: settings.singleton, set: vals })
+    );
+    revalidatePath("/");
+    revalidatePath("/admin/settings");
+    return { ok: true, data: undefined };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Error al guardar color" };
   }
 }
 

@@ -19,7 +19,7 @@ export default async function CatalogLayout({ children }: { children: React.Reac
   if (!tenant) notFound();
 
   const [s] = await withTenantDb(tenant.schemaName, (db) =>
-    db.select({ discountCode: settings.discountCode, discountCodePercent: settings.discountCodePercent }).from(settings).limit(1)
+    db.select({ discountCode: settings.discountCode, discountCodePercent: settings.discountCodePercent, footerBgColor: settings.footerBgColor }).from(settings).limit(1)
   );
 
   return (
@@ -42,7 +42,7 @@ export default async function CatalogLayout({ children }: { children: React.Reac
 
       <main>{children}</main>
 
-      <footer className="mt-16 border-t border-gray-100 bg-gray-50 py-10">
+      <footer className="mt-16 border-t border-gray-100 py-10" style={{ backgroundColor: s?.footerBgColor ?? "#f9fafb" }}>
         <div className="max-w-screen-xl mx-auto px-4 text-center">
           <p className="font-bold text-gray-900 mb-1">{tenant.name}</p>
           <p className="text-gray-400 text-sm">

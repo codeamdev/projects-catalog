@@ -51,8 +51,10 @@ export default async function SettingsPage() {
         logoUrl: tenant?.logoUrl ?? null,
         whatsappNumber: tenant?.whatsappNumber ?? "",
         primaryColor: tenant?.primaryColor ?? "#1a1a1a",
+        whyChooseEnabled: s?.whyChooseEnabled ?? false,
         whyChooseTitle: s?.whyChooseTitle ?? "¿Por qué elegirnos?",
         whyChooseItems: parseWhyItems(s?.whyChooseItems),
+        footerBgColor: s?.footerBgColor ?? "#f9fafb",
       }}
     />
   );
