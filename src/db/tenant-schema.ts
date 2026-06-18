@@ -127,6 +127,9 @@ export const settings = pgTable("settings", {
   whyChooseDescription: text("why_choose_description"),
   whyChooseItems: text("why_choose_items"),
   whyChooseIconStyle: text("why_choose_icon_style").default("outline"),
+  faqEnabled: boolean("faq_enabled").default(false).notNull(),
+  faqTitle: text("faq_title"),
+  faqItems: text("faq_items"),
   footerBgColor: text("footer_bg_color"),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (t) => [

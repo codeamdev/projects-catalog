@@ -498,6 +498,110 @@ export async function updateFooterColor(formData: FormData): Promise<ActionResul
   }
 }
 
+// ── Guardar todos los ajustes en un solo paso ─────────────────────
+
+export async function updateAllSettings(formData: FormData): Promise<ActionResult> {
+  try {
+    const session = await requireRole("ADMIN");
+    const schema = session.user.schemaName;
+
+    // Hero: video tiene prioridad sobre imágenes
+    const videoUrl = ((formData.get("hero_video_url") as string) ?? "").trim();
+    const imageUrls = ((formData.get("hero_images") as string) ?? "").trim();
+    const heroImageUrl = videoUrl || imageUrls || null;
+    const heroImageUrlMobile = ((formData.get("hero_images_mobile") as string) ?? "").trim() || null;
+    const heroVideoUrlMobile = ((formData.get("hero_video_url_mobile") as string) ?? "").trim() || null;
+
+    const rawPosition = (formData.get("hero_image_position") as string) || "center";
+    const heroImagePosition = (["top", "center", "bottom"] as const).includes(rawPosition as "top" | "center" | "bottom")
+      ? (rawPosition as "top" | "center" | "bottom") : "center";
+
+    const VALID_STYLES = ["stories","pills","chips","tabs","bubbles","minimal","bold","grid","outline","compact"] as const;
+    type CatStyle = typeof VALID_STYLES[number];
+    const rawStyle = (formData.get("categories_style") as string) || "stories";
+    const categoriesStyle: CatStyle = (VALID_STYLES as readonly string[]).includes(rawStyle) ? rawStyle as CatStyle : "stories";
+
+    // Why choose us items
+    const whyItemsRaw = formData.get("why_choose_items") as string | null;
+    let whyChooseItems: string | null = null;
+    if (whyItemsRaw) {
+      try {
+        const parsed = JSON.parse(whyItemsRaw);
+        if (Array.isArray(parsed) && parsed.length > 0) whyChooseItems = whyItemsRaw;
+      } catch { /* ignore */ }
+    }
+
+    // FAQ items
+    const faqItemsRaw = formData.get("faq_items") as string | null;
+    let faqItemsSave: string | null = null;
+    if (faqItemsRaw) {
+      try {
+        const parsed = JSON.parse(faqItemsRaw);
+        if (Array.isArray(parsed) && parsed.length > 0) faqItemsSave = faqItemsRaw;
+      } catch { /* ignore */ }
+    }
+
+    // Discount
+    const rawCode = (formData.get("discount_code") as string)?.trim() || null;
+    const rawPercent = formData.get("discount_code_percent") as string;
+    const discountCodePercent = rawCode && rawPercent
+      ? Math.min(99, Math.max(1, parseInt(rawPercent, 10))) || null : null;
+
+    const tenantVals = {
+      whatsappNumber: ((formData.get("whatsapp_number") as string) ?? "").replace(/[\s+\-()]/g, "") || null,
+      primaryColor: (formData.get("primary_color") as string) || "#1a1a1a",
+      logoUrl: (formData.get("logo_url") as string) || null,
+      updatedAt: new Date(),
+    };
+
+    const settingsVals = {
+      heroTitle: (formData.get("hero_title") as string) || "Bienvenidos",
+      heroSubtitle: (formData.get("hero_subtitle") as string) || null,
+      heroImageUrl,
+      heroImageUrlMobile,
+      heroVideoUrlMobile,
+      heroImagePosition,
+      categoriesStyle,
+      metaTitle: (formData.get("meta_title") as string) || null,
+      metaDescription: (formData.get("meta_description") as string) || null,
+      googleSiteVerification: (formData.get("google_site_verification") as string) || null,
+      instagramUrl: (formData.get("instagram_url") as string) || null,
+      facebookUrl: (formData.get("facebook_url") as string) || null,
+      tiktokUrl: (formData.get("tiktok_url") as string) || null,
+      youtubeUrl: (formData.get("youtube_url") as string) || null,
+      footerText: (formData.get("footer_text") as string) || null,
+      footerBgColor: (formData.get("footer_bg_color") as string) || "#f9fafb",
+      discountCode: rawCode,
+      discountCodePercent,
+      whyChooseEnabled: formData.get("why_choose_enabled") === "1",
+      whyChooseTitle: (formData.get("why_choose_title") as string)?.trim() || null,
+      whyChooseHeadline: (formData.get("why_choose_headline") as string)?.trim() || null,
+      whyChooseDescription: (formData.get("why_choose_description") as string)?.trim() || null,
+      whyChooseItems,
+      whyChooseIconStyle: (formData.get("why_choose_icon_style") as string) || "color",
+      faqEnabled: formData.get("faq_enabled") === "1",
+      faqTitle: (formData.get("faq_title") as string)?.trim() || null,
+      faqItems: faqItemsSave,
+      updatedAt: new Date(),
+    };
+
+    await Promise.all([
+      publicDb.update(tenants).set(tenantVals).where(eq(tenants.schemaName, schema)),
+      withTenantDb(schema, (db) =>
+        db.insert(settings)
+          .values({ singleton: true, ...settingsVals })
+          .onConflictDoUpdate({ target: settings.singleton, set: settingsVals })
+      ),
+    ]);
+
+    revalidatePath("/");
+    revalidatePath("/admin/settings");
+    return { ok: true, data: undefined };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Error al guardar ajustes" };
+  }
+}
+
 // ── Filtros ───────────────────────────────────────────────────────
 
 export async function createFilterGroup(formData: FormData): Promise<ActionResult> {

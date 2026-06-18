@@ -8,6 +8,7 @@ import { settings } from "@/db/tenant-schema";
 import { HeroBanner } from "@/components/catalog/HeroBanner";
 import { ProductGrid } from "@/components/catalog/ProductGrid";
 import { WhyChooseUs } from "@/components/catalog/WhyChooseUs";
+import { FAQ } from "@/components/catalog/FAQ";
 import { CartButton } from "@/components/cart/CartButton";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { WhatsAppButton } from "@/components/catalog/WhatsAppButton";
@@ -145,9 +146,10 @@ export default async function Home({
 
   // ── ¿Por qué elegirnos? ──────────────────────────────────────
   let whyItems: { icon: string; title: string; description: string }[] = [];
-  try {
-    if (s?.whyChooseItems) whyItems = JSON.parse(s.whyChooseItems);
-  } catch { /* */ }
+  try { if (s?.whyChooseItems) whyItems = JSON.parse(s.whyChooseItems); } catch { /* */ }
+
+  let faqItems: { question: string; answer: string }[] = [];
+  try { if (s?.faqItems) faqItems = JSON.parse(s.faqItems); } catch { /* */ }
 
   return (
     <div
@@ -203,8 +205,11 @@ export default async function Home({
             headline={s?.whyChooseHeadline || "La mejor experiencia de compra"}
             description={s?.whyChooseDescription || undefined}
             items={whyItems}
-            iconStyle={s?.whyChooseIconStyle ?? "outline"}
+            iconStyle={s?.whyChooseIconStyle ?? "color"}
           />
+        )}
+        {s?.faqEnabled && faqItems.length > 0 && (
+          <FAQ title={s?.faqTitle || "Preguntas frecuentes"} items={faqItems} />
         )}
       </main>
 

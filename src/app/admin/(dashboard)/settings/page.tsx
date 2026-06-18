@@ -56,7 +56,10 @@ export default async function SettingsPage() {
         whyChooseHeadline: s?.whyChooseHeadline ?? "",
         whyChooseDescription: s?.whyChooseDescription ?? "",
         whyChooseItems: parseWhyItems(s?.whyChooseItems),
-        whyChooseIconStyle: s?.whyChooseIconStyle ?? "outline",
+        whyChooseIconStyle: s?.whyChooseIconStyle ?? "color",
+        faqEnabled: s?.faqEnabled ?? false,
+        faqTitle: s?.faqTitle ?? "Preguntas frecuentes",
+        faqItems: parseWhyItems(s?.faqItems) as { question: string; answer: string }[],
         footerBgColor: s?.footerBgColor ?? "#f9fafb",
       }}
     />

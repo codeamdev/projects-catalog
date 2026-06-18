@@ -48,6 +48,7 @@ interface Props {
   iconStyle?: string;
 }
 
+// Tipos: "color" | "dark" | "circle-color" | "circle-dark"
 function ItemIcon({ name, style }: { name: string; style: string }) {
   const entry = WHY_ICONS[name];
 
@@ -56,25 +57,27 @@ function ItemIcon({ name, style }: { name: string; style: string }) {
   }
 
   const { Icon } = entry;
-  const [shape, colorVariant] = style.split("-");
-  const isGray = colorVariant === "gray";
-  const iconColor = isGray ? "#6b7280" : "var(--primary, #111827)";
 
-  if (shape === "circle") {
-    const bgColor = isGray ? "#e5e7eb" : "var(--primary, #111827)";
-    const fgColor = isGray ? "#374151" : "white";
+  if (style === "circle-color") {
     return (
-      <div
-        className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
-        style={{ backgroundColor: bgColor }}
-      >
-        <Icon size={26} strokeWidth={1.8} color={fgColor} />
+      <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
+        style={{ backgroundColor: "var(--primary, #111827)" }}>
+        <Icon size={26} strokeWidth={1.8} color="white" />
       </div>
     );
   }
-
-  const strokeWidth = shape === "bold" ? 2.5 : 1.5;
-  return <Icon size={36} strokeWidth={strokeWidth} style={{ color: iconColor }} />;
+  if (style === "circle-dark") {
+    return (
+      <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 bg-gray-900">
+        <Icon size={26} strokeWidth={1.8} color="white" />
+      </div>
+    );
+  }
+  if (style === "dark") {
+    return <Icon size={36} strokeWidth={1.8} className="text-gray-900" />;
+  }
+  // "color" (default)
+  return <Icon size={36} strokeWidth={1.8} style={{ color: "var(--primary, #111827)" }} />;
 }
 
 export function WhyChooseUs({ label, headline, description, items, iconStyle = "outline" }: Props) {
