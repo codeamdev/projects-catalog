@@ -52,29 +52,29 @@ function ItemIcon({ name, style }: { name: string; style: string }) {
   const entry = WHY_ICONS[name];
 
   if (!entry) {
-    // emoji fallback
     return <span className="text-3xl leading-none">{name}</span>;
   }
 
   const { Icon } = entry;
+  const [shape, colorVariant] = style.split("-");
+  const isGray = colorVariant === "gray";
+  const iconColor = isGray ? "#6b7280" : "var(--primary, #111827)";
 
-  if (style === "circle") {
+  if (shape === "circle") {
+    const bgColor = isGray ? "#e5e7eb" : "var(--primary, #111827)";
+    const fgColor = isGray ? "#374151" : "white";
     return (
       <div
         className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
-        style={{ backgroundColor: "var(--primary, #111827)" }}
+        style={{ backgroundColor: bgColor }}
       >
-        <Icon size={26} strokeWidth={1.8} color="white" />
+        <Icon size={26} strokeWidth={1.8} color={fgColor} />
       </div>
     );
   }
 
-  if (style === "bold") {
-    return <Icon size={36} strokeWidth={2.5} style={{ color: "var(--primary, #111827)" }} />;
-  }
-
-  // outline (default)
-  return <Icon size={36} strokeWidth={1.5} style={{ color: "var(--primary, #111827)" }} />;
+  const strokeWidth = shape === "bold" ? 2.5 : 1.5;
+  return <Icon size={36} strokeWidth={strokeWidth} style={{ color: iconColor }} />;
 }
 
 export function WhyChooseUs({ label, headline, description, items, iconStyle = "outline" }: Props) {

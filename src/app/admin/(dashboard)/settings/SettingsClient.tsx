@@ -451,45 +451,8 @@ export function SettingsClient({ defaults }: Props) {
             />
           </div>
 
-          {/* Estilo de íconos */}
-          <div>
-            <label className={LABEL}>Estilo de íconos</label>
-            <div className="flex gap-2 flex-wrap">
-              {[
-                { id: "outline", label: "Líneas finas", desc: "Minimalista" },
-                { id: "bold",    label: "Líneas gruesas", desc: "Más visible" },
-                { id: "circle",  label: "Círculo relleno", desc: "Con color de marca" },
-              ].map(({ id, label, desc }) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => setWhyIconStyle(id)}
-                  className={`flex-1 min-w-[130px] px-4 py-3 rounded-xl border-2 text-sm transition-all text-left ${
-                    whyIconStyle === id
-                      ? "border-indigo-500 bg-indigo-50 text-indigo-800"
-                      : "border-gray-200 text-gray-600 hover:border-gray-300"
-                  }`}
-                >
-                  <span className="font-semibold block">{label}</span>
-                  <span className="text-xs opacity-70">{desc}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <label className={`${LABEL} mb-0`}>Razones (hasta 4)</label>
-              {whyItems.length < 4 && (
-                <button
-                  type="button"
-                  onClick={() => setWhyItems([...whyItems, EMPTY_ITEM])}
-                  className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
-                >
-                  + Agregar razón
-                </button>
-              )}
-            </div>
+            <label className={`${LABEL} mb-0`}>Razones (hasta 4)</label>
 
             {whyItems.map((item, i) => (
               <div key={i} className="rounded-xl border border-gray-100 bg-gray-50 p-4 space-y-3">
@@ -546,6 +509,80 @@ export function SettingsClient({ defaults }: Props) {
                 </div>
               </div>
             ))}
+
+            {whyItems.length < 4 && (
+              <button
+                type="button"
+                onClick={() => setWhyItems([...whyItems, EMPTY_ITEM])}
+                className="w-full py-2.5 rounded-xl border-2 border-dashed border-gray-200 text-sm text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50 font-medium transition-all"
+              >
+                + Agregar razón
+              </button>
+            )}
+          </div>
+
+          {/* Estilo de íconos */}
+          <div className="space-y-3">
+            <label className={LABEL}>Estilo de íconos</label>
+
+            {/* Forma */}
+            <div>
+              <p className="text-xs text-gray-400 mb-1.5">Forma</p>
+              <div className="flex gap-2 flex-wrap">
+                {([
+                  { id: "outline", label: "Líneas finas" },
+                  { id: "bold",    label: "Líneas gruesas" },
+                  { id: "circle",  label: "Círculo" },
+                ] as const).map(({ id, label }) => {
+                  const shape = whyIconStyle.split("-")[0];
+                  const active = shape === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => {
+                        const color = whyIconStyle.includes("gray") ? "gray" : "color";
+                        setWhyIconStyle(color === "gray" ? `${id}-gray` : id);
+                      }}
+                      className={`flex-1 min-w-[110px] px-4 py-2.5 rounded-xl border-2 text-sm font-medium transition-all ${
+                        active ? "border-indigo-500 bg-indigo-50 text-indigo-800" : "border-gray-200 text-gray-600 hover:border-gray-300"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Color */}
+            <div>
+              <p className="text-xs text-gray-400 mb-1.5">Color</p>
+              <div className="flex gap-2">
+                {([
+                  { id: "color", label: "Color de marca" },
+                  { id: "gray",  label: "Neutro (gris)" },
+                ] as const).map(({ id, label }) => {
+                  const isGray = whyIconStyle.includes("gray");
+                  const active = id === "gray" ? isGray : !isGray;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => {
+                        const shape = whyIconStyle.split("-")[0];
+                        setWhyIconStyle(id === "gray" ? `${shape}-gray` : shape);
+                      }}
+                      className={`flex-1 px-4 py-2.5 rounded-xl border-2 text-sm font-medium transition-all ${
+                        active ? "border-indigo-500 bg-indigo-50 text-indigo-800" : "border-gray-200 text-gray-600 hover:border-gray-300"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
           <button
