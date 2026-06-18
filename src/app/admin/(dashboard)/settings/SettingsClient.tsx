@@ -55,6 +55,8 @@ interface Props {
     primaryColor: string;
     whyChooseEnabled: boolean;
     whyChooseTitle: string;
+    whyChooseHeadline: string;
+    whyChooseDescription: string;
     whyChooseItems: WhyItem[];
     footerBgColor: string;
   };
@@ -413,13 +415,35 @@ export function SettingsClient({ defaults }: Props) {
             </button>
           </label>
 
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label className={LABEL}>Etiqueta pequeña (arriba)</label>
+              <input
+                name="why_choose_title"
+                defaultValue={defaults.whyChooseTitle}
+                placeholder="¿Por qué elegirnos?"
+                className={INPUT}
+              />
+              <p className="text-[11px] text-gray-400 mt-1">Texto pequeño en mayúsculas sobre el titular</p>
+            </div>
+            <div>
+              <label className={LABEL}>Titular principal</label>
+              <input
+                name="why_choose_headline"
+                defaultValue={defaults.whyChooseHeadline}
+                placeholder="La mejor experiencia de compra"
+                className={INPUT}
+              />
+            </div>
+          </div>
           <div>
-            <label className={LABEL}>Título de la sección</label>
-            <input
-              name="why_choose_title"
-              defaultValue={defaults.whyChooseTitle}
-              placeholder="¿Por qué elegirnos?"
-              className={INPUT}
+            <label className={LABEL}>Descripción (opcional)</label>
+            <textarea
+              name="why_choose_description"
+              defaultValue={defaults.whyChooseDescription}
+              placeholder="En pocas palabras, por qué confiar en nosotros..."
+              rows={2}
+              className={`${INPUT} resize-none`}
             />
           </div>
 

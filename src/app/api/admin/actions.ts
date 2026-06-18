@@ -449,6 +449,8 @@ export async function updateWhyChooseUs(formData: FormData): Promise<ActionResul
     const schema = session.user.schemaName;
 
     const title = (formData.get("why_choose_title") as string)?.trim() || null;
+    const headline = (formData.get("why_choose_headline") as string)?.trim() || null;
+    const description = (formData.get("why_choose_description") as string)?.trim() || null;
     const itemsRaw = formData.get("why_choose_items") as string | null;
 
     let whyChooseItems: string | null = null;
@@ -461,7 +463,7 @@ export async function updateWhyChooseUs(formData: FormData): Promise<ActionResul
 
     const whyChooseEnabled = formData.get("why_choose_enabled") === "1";
 
-    const vals = { whyChooseEnabled, whyChooseTitle: title, whyChooseItems, updatedAt: new Date() };
+    const vals = { whyChooseEnabled, whyChooseTitle: title, whyChooseHeadline: headline, whyChooseDescription: description, whyChooseItems, updatedAt: new Date() };
     await withTenantDb(schema, (db) =>
       db.insert(settings)
         .values({ singleton: true, ...vals })

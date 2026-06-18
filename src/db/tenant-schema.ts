@@ -123,6 +123,8 @@ export const settings = pgTable("settings", {
   inventoryEnabled: boolean("inventory_enabled").default(false).notNull(),
   whyChooseEnabled: boolean("why_choose_enabled").default(false).notNull(),
   whyChooseTitle: text("why_choose_title"),
+  whyChooseHeadline: text("why_choose_headline"),
+  whyChooseDescription: text("why_choose_description"),
   whyChooseItems: text("why_choose_items"),
   footerBgColor: text("footer_bg_color"),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

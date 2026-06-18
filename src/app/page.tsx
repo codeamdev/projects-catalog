@@ -199,7 +199,9 @@ export default async function Home({
 
         {s?.whyChooseEnabled && whyItems.length > 0 && (
           <WhyChooseUs
-            title={s?.whyChooseTitle || "¿Por qué elegirnos?"}
+            label={s?.whyChooseTitle || "¿Por qué elegirnos?"}
+            headline={s?.whyChooseHeadline || "La mejor experiencia de compra"}
+            description={s?.whyChooseDescription || undefined}
             items={whyItems}
           />
         )}

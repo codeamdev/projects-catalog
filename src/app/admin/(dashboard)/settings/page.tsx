@@ -53,6 +53,8 @@ export default async function SettingsPage() {
         primaryColor: tenant?.primaryColor ?? "#1a1a1a",
         whyChooseEnabled: s?.whyChooseEnabled ?? false,
         whyChooseTitle: s?.whyChooseTitle ?? "¿Por qué elegirnos?",
+        whyChooseHeadline: s?.whyChooseHeadline ?? "",
+        whyChooseDescription: s?.whyChooseDescription ?? "",
         whyChooseItems: parseWhyItems(s?.whyChooseItems),
         footerBgColor: s?.footerBgColor ?? "#f9fafb",
       }}
