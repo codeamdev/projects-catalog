@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { eq } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
@@ -16,7 +16,9 @@ import {
   filterGroups,
   filterOptions,
   productFilters,
+  subscribers,
 } from "@/db/tenant-schema";
+import type { CampaignData, TenantEmailInfo } from "@/lib/email";
 import { tenants } from "@/db/public-schema";
 
 // ── Tipos de retorno estructurado ─────────────────────────────
@@ -582,6 +584,19 @@ export async function updateAllSettings(formData: FormData): Promise<ActionResul
       faqEnabled: formData.get("faq_enabled") === "1",
       faqTitle: (formData.get("faq_title") as string)?.trim() || null,
       faqItems: faqItemsSave,
+      // Welcome popup
+      welcomeEnabled: formData.get("welcome_enabled") === "1",
+      welcomeTitle: (formData.get("welcome_title") as string)?.trim() || null,
+      welcomeSubtitle: (formData.get("welcome_subtitle") as string)?.trim() || null,
+      welcomeDiscountPercent: (() => {
+        const p = formData.get("welcome_discount_percent") as string;
+        return p ? Math.min(99, Math.max(1, parseInt(p, 10))) || null : null;
+      })(),
+      welcomeMessage: (formData.get("welcome_message") as string)?.trim() || null,
+      welcomeDelaySeconds: (() => {
+        const d = formData.get("welcome_delay_seconds") as string;
+        return d ? Math.min(30, Math.max(0, parseInt(d, 10))) : 3;
+      })(),
       updatedAt: new Date(),
     };
 
@@ -667,6 +682,124 @@ export async function deleteFilterOption(optionId: string): Promise<ActionResult
 }
 
 // ── Admin user (seed/setup) ───────────────────────────────────────
+
+// ── Ajustes generales (welcome popup) ────────────────────────────
+
+export async function updateWelcomeSettings(formData: FormData): Promise<ActionResult> {
+  try {
+    const session = await requireRole("ADMIN");
+    const schema = session.user.schemaName;
+
+    const rawPercent = formData.get("welcome_discount_percent") as string;
+    const welcomeDiscountPercent = rawPercent ? Math.min(99, Math.max(1, parseInt(rawPercent, 10))) || null : null;
+    const rawDelay = formData.get("welcome_delay_seconds") as string;
+    const welcomeDelaySeconds = rawDelay ? Math.min(30, Math.max(0, parseInt(rawDelay, 10))) : 3;
+
+    const vals = {
+      welcomeEnabled: formData.get("welcome_enabled") === "1",
+      welcomeTitle: (formData.get("welcome_title") as string)?.trim() || null,
+      welcomeSubtitle: (formData.get("welcome_subtitle") as string)?.trim() || null,
+      welcomeDiscountPercent,
+      welcomeMessage: (formData.get("welcome_message") as string)?.trim() || null,
+      welcomeDelaySeconds,
+      updatedAt: new Date(),
+    };
+
+    await withTenantDb(schema, (db) =>
+      db.insert(settings).values({ singleton: true, ...vals })
+        .onConflictDoUpdate({ target: settings.singleton, set: vals })
+    );
+
+    revalidatePath("/");
+    revalidatePath("/admin/settings");
+    return { ok: true, data: undefined };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Error al guardar" };
+  }
+}
+
+// ── Campañas de email ─────────────────────────────────────────────
+
+export async function sendEmailCampaign(formData: FormData): Promise<ActionResult<{ sent: number; failed: number }>> {
+  try {
+    const session = await requireRole("ADMIN");
+    const schema = session.user.schemaName;
+
+    const type = (formData.get("type") as string) || "general";
+    const subject = (formData.get("subject") as string)?.trim();
+    const title = (formData.get("title") as string)?.trim();
+    const message = (formData.get("message") as string)?.trim();
+
+    if (!subject || !title || !message) {
+      return { ok: false, error: "Asunto, título y mensaje son requeridos" };
+    }
+
+    // Fetch active subscribers
+    const activeSubscribers = await withTenantDb(schema, (db) =>
+      db.select({
+        email: subscribers.email,
+        name: subscribers.name,
+        discountCode: subscribers.discountCode,
+        unsubscribeToken: subscribers.unsubscribeToken,
+      }).from(subscribers).where(isNull(subscribers.unsubscribedAt))
+    );
+
+    if (activeSubscribers.length === 0) {
+      return { ok: false, error: "No hay suscriptores activos" };
+    }
+
+    // Build campaign
+    const campaign: CampaignData = {
+      type: type as CampaignData["type"],
+      subject,
+      title,
+      message,
+    };
+
+    if (formData.get("discount_code")) {
+      campaign.discountCode = (formData.get("discount_code") as string).toUpperCase();
+      campaign.discountPercent = parseInt(formData.get("discount_percent") as string, 10) || undefined;
+    }
+
+    const productIdsRaw = formData.get("product_ids") as string | null;
+    if (productIdsRaw) {
+      try {
+        const ids: string[] = JSON.parse(productIdsRaw);
+        if (ids.length > 0) {
+          const productList = await withTenantDb(schema, (db) =>
+            db.select({
+              title: products.title,
+              price: products.price,
+              imageUrl: productImages.url,
+            })
+              .from(products)
+              .leftJoin(productImages, and(eq(productImages.productId, products.id), eq(productImages.order, 0)))
+              .where(inArray(products.id, ids))
+          );
+          campaign.products = productList.map((p) => ({
+            title: p.title,
+            price: p.price,
+            imageUrl: p.imageUrl ?? null,
+          }));
+        }
+      } catch { /* ignore */ }
+    }
+
+    const tenantInfo: TenantEmailInfo = {
+      name: formData.get("tenant_name") as string || "",
+      subdomain: formData.get("tenant_subdomain") as string || "",
+      logoUrl: formData.get("tenant_logo_url") as string || null,
+      primaryColor: formData.get("tenant_primary_color") as string || "#111827",
+    };
+
+    const { sendCampaignEmails } = await import("@/lib/email");
+    const result = await sendCampaignEmails(tenantInfo, activeSubscribers, campaign);
+
+    return { ok: true, data: result };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Error al enviar emails" };
+  }
+}
 
 export async function createAdminUser(
   schemaName: string,

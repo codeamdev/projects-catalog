@@ -131,9 +131,31 @@ export const settings = pgTable("settings", {
   faqTitle: text("faq_title"),
   faqItems: text("faq_items"),
   footerBgColor: text("footer_bg_color"),
+  // Popup de bienvenida / suscripción
+  welcomeEnabled: boolean("welcome_enabled").default(false).notNull(),
+  welcomeTitle: text("welcome_title"),
+  welcomeSubtitle: text("welcome_subtitle"),
+  welcomeDiscountPercent: smallint("welcome_discount_percent"),
+  welcomeMessage: text("welcome_message"),
+  welcomeDelaySeconds: smallint("welcome_delay_seconds").default(3),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (t) => [
   unique("settings_singleton_unique").on(t.singleton),
+]);
+
+export const subscribers = pgTable("subscribers", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  email: text("email").notNull().unique(),
+  name: text("name"),
+  discountCode: text("discount_code"),
+  discountUsedAt: timestamp("discount_used_at"),
+  unsubscribeToken: text("unsubscribe_token").notNull().$defaultFn(() => crypto.randomUUID()),
+  unsubscribedAt: timestamp("unsubscribed_at"),
+  source: text("source").default("welcome_popup"),
+  subscribedAt: timestamp("subscribed_at").defaultNow().notNull(),
+}, (t) => [
+  index("idx_subscribers_email").on(t.email),
+  index("idx_subscribers_code").on(t.discountCode),
 ]);
 
 // ── Filtros ───────────────────────────────────────────────────
@@ -194,6 +216,7 @@ export type Settings = typeof settings.$inferSelect;
 export type Order = typeof orders.$inferSelect;
 export type FilterGroup = typeof filterGroups.$inferSelect;
 export type FilterOption = typeof filterOptions.$inferSelect;
+export type Subscriber = typeof subscribers.$inferSelect;
 
 export type ProductWithRelations = Product & {
   category: Category | null;

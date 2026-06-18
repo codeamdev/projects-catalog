@@ -61,6 +61,12 @@ export default async function SettingsPage() {
         faqTitle: s?.faqTitle ?? "Preguntas frecuentes",
         faqItems: parseWhyItems(s?.faqItems) as { question: string; answer: string }[],
         footerBgColor: s?.footerBgColor ?? "#f9fafb",
+        welcomeEnabled: s?.welcomeEnabled ?? false,
+        welcomeTitle: s?.welcomeTitle ?? "¡Bienvenida/o! 🎉",
+        welcomeSubtitle: s?.welcomeSubtitle ?? "Suscribite y obtené un descuento exclusivo",
+        welcomeDiscountPercent: s?.welcomeDiscountPercent ?? null,
+        welcomeMessage: s?.welcomeMessage ?? "",
+        welcomeDelaySeconds: s?.welcomeDelaySeconds ?? 3,
       }}
     />
   );

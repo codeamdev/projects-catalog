@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
-import { withTenantTransaction } from "@/db";
-import { orders } from "@/db/tenant-schema";
+import { withTenantTransaction, withTenantDb } from "@/db";
+import { orders, subscribers } from "@/db/tenant-schema";
 import { getTenantBySubdomain } from "@/lib/tenant";
 
 const OrderItemSchema = z.object({
@@ -78,6 +78,16 @@ export async function POST(request: NextRequest) {
 
     return num;
   });
+
+  // Mark subscriber discount code as used (non-blocking)
+  const couponCode = parsed.data.couponCode;
+  if (couponCode && couponCode.startsWith("BIENVENIDA-")) {
+    withTenantDb(tenant.schemaName, (db) =>
+      db.update(subscribers)
+        .set({ discountUsedAt: new Date() })
+        .where(and(eq(subscribers.discountCode, couponCode), isNull(subscribers.discountUsedAt)))
+    ).catch(() => { /* non-critical */ });
+  }
 
   return NextResponse.json({ orderNumber });
 }

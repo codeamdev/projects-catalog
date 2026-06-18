@@ -7,7 +7,7 @@ import { ImageUpload } from "@/components/admin/ImageUpload";
 import { MultiImageUpload } from "@/components/admin/MultiImageUpload";
 import { VideoUpload } from "@/components/admin/VideoUpload";
 import { updateAllSettings } from "@/app/api/admin/actions";
-import { WHY_EMOJIS } from "@/components/catalog/WhyChooseUs";
+import { WHY_EMOJIS, WHY_ICONS } from "@/components/catalog/WhyChooseUs";
 
 const INPUT = "w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300";
 const LABEL = "block text-sm font-medium text-gray-700 mb-1";
@@ -61,6 +61,12 @@ interface Props {
     faqTitle: string;
     faqItems: FaqItem[];
     footerBgColor: string;
+    welcomeEnabled: boolean;
+    welcomeTitle: string;
+    welcomeSubtitle: string;
+    welcomeDiscountPercent: number | null;
+    welcomeMessage: string;
+    welcomeDelaySeconds: number;
   };
 }
 
@@ -83,6 +89,9 @@ export function SettingsClient({ defaults }: Props) {
   const [newWhy, setNewWhy] = useState<WhyItem | null>(null);
   const DEFAULT_EMOJI = WHY_EMOJIS[0].emoji;
 
+  // Welcome popup
+  const [welcomeEnabled, setWelcomeEnabled] = useState(defaults.welcomeEnabled);
+
   // FAQ
   const [faqEnabled, setFaqEnabled] = useState(defaults.faqEnabled);
   const [faqItems, setFaqItems] = useState<FaqItem[]>(defaults.faqItems);
@@ -101,6 +110,7 @@ export function SettingsClient({ defaults }: Props) {
 
     // State-managed fields
     fd.set("categories_style", catStyle);
+    fd.set("welcome_enabled", welcomeEnabled ? "1" : "0");
     fd.set("why_choose_enabled", whyEnabled ? "1" : "0");
     fd.set("why_choose_icon_style", whyIconStyle);
     fd.set("why_choose_items", JSON.stringify(whyItems.filter(it => it.title.trim())));
@@ -363,28 +373,13 @@ export function SettingsClient({ defaults }: Props) {
                 <div className="rounded-xl border-2 border-indigo-200 bg-indigo-50/30 p-4 space-y-3">
                   <p className="text-xs font-semibold text-indigo-700">Nueva razón</p>
 
-                  {/* Emoji picker */}
-                  <div>
-                    <label className={LABEL}>Ícono</label>
-                    <div className="grid grid-cols-[repeat(auto-fill,minmax(52px,1fr))] gap-1 p-2 bg-white rounded-xl border border-gray-200 max-h-52 overflow-y-auto">
-                      {WHY_EMOJIS.map(({ emoji, label }) => (
-                        <button key={emoji} type="button" title={label}
-                          onClick={() => setNewWhy({ ...newWhy, icon: emoji })}
-                          className={`flex flex-col items-center gap-0.5 py-2 px-1 rounded-lg transition-all ${newWhy.icon === emoji ? "bg-indigo-100 ring-2 ring-indigo-400" : "hover:bg-gray-100"}`}>
-                          <span className="text-2xl leading-none">{emoji}</span>
-                          <span className="text-[8px] leading-tight text-center text-gray-500 truncate w-full">{label}</span>
-                        </button>
-                      ))}
-                    </div>
-                    <p className="text-[11px] text-gray-400 mt-1.5">También podés escribir cualquier emoji directamente en el campo de título, o pegar uno aquí:</p>
-                    <input
-                      value={newWhy.icon.length > 2 ? "" : newWhy.icon}
-                      onChange={e => setNewWhy({ ...newWhy, icon: e.target.value })}
-                      placeholder="Pegá un emoji personalizado..."
-                      className={`${INPUT} mt-1 text-lg`}
-                      maxLength={8}
-                    />
-                  </div>
+                  {/* Picker: Emoji + Íconos SVG con tabs */}
+                  <IconPicker
+                    value={newWhy.icon}
+                    onChange={(v) => setNewWhy({ ...newWhy, icon: v })}
+                    INPUT={INPUT}
+                    LABEL={LABEL}
+                  />
 
                   <div>
                     <label className={LABEL}>Título *</label>
@@ -518,6 +513,59 @@ export function SettingsClient({ defaults }: Props) {
           </div>
         </section>
 
+        {/* ── Popup de bienvenida + suscripción ── */}
+        <section className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5">
+          <div>
+            <h2 className="text-base font-semibold text-gray-900">Popup de bienvenida</h2>
+            <p className="text-xs text-gray-400 mt-0.5">Modal que aparece al ingresar al catálogo por primera vez. Captura el email y ofrece un descuento.</p>
+          </div>
+
+          {/* Toggle */}
+          <label className="flex items-center justify-between gap-3 p-4 rounded-xl border border-gray-100 bg-gray-50 cursor-pointer">
+            <div>
+              <p className="text-sm font-medium text-gray-800">Mostrar popup en el catálogo</p>
+              <p className="text-xs text-gray-400 mt-0.5">Se muestra una vez por visitante (cookie de sesión)</p>
+            </div>
+            <button type="button" role="switch" aria-checked={welcomeEnabled} onClick={() => setWelcomeEnabled(!welcomeEnabled)}
+              className={`relative flex-shrink-0 w-11 h-6 rounded-full transition-colors duration-200 ${welcomeEnabled ? "bg-indigo-600" : "bg-gray-300"}`}>
+              <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${welcomeEnabled ? "translate-x-5" : "translate-x-0"}`} />
+            </button>
+          </label>
+
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label className={LABEL}>Título del popup</label>
+              <input name="welcome_title" defaultValue={defaults.welcomeTitle} placeholder="¡Bienvenida/o! 🎉" className={INPUT} />
+            </div>
+            <div>
+              <label className={LABEL}>Subtítulo</label>
+              <input name="welcome_subtitle" defaultValue={defaults.welcomeSubtitle} placeholder="Suscribite y obtené tu descuento" className={INPUT} />
+            </div>
+          </div>
+          <div>
+            <label className={LABEL}>Mensaje</label>
+            <textarea name="welcome_message" defaultValue={defaults.welcomeMessage} placeholder="Ingresá tu correo para recibir novedades y descuentos exclusivos." rows={2} className={`${INPUT} resize-none`} />
+          </div>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label className={LABEL}>% de descuento (opcional)</label>
+              <input type="number" name="welcome_discount_percent" min={1} max={99} defaultValue={defaults.welcomeDiscountPercent ?? ""} placeholder="Ej: 15" className={INPUT} />
+              <p className="text-[11px] text-gray-400 mt-1">Deja vacío para no mostrar descuento</p>
+            </div>
+            <div>
+              <label className={LABEL}>Demora antes de mostrar (segundos)</label>
+              <input type="number" name="welcome_delay_seconds" min={0} max={30} defaultValue={defaults.welcomeDelaySeconds} className={INPUT} />
+            </div>
+          </div>
+          <div className="rounded-xl bg-blue-50 border border-blue-100 p-3.5 text-xs text-blue-700 space-y-1">
+            <p><strong>¿Cómo funciona?</strong></p>
+            <p>• Al suscribirse, el visitante recibe un código único de descuento por email.</p>
+            <p>• El código puede usarse en el carrito para obtener el % configurado.</p>
+            <p>• Podés ver todos los suscriptores en <strong>Suscriptores</strong> del menú.</p>
+            <p>• Para enviar emails a los suscriptores, usá la sección <strong>Correos</strong>.</p>
+          </div>
+        </section>
+
         {/* ── Botón guardar al final ── */}
         <div className="flex justify-end pb-8">
           <button type="submit" disabled={saving}
@@ -527,6 +575,67 @@ export function SettingsClient({ defaults }: Props) {
         </div>
       </div>
     </form>
+  );
+}
+
+// ── Icon Picker (emoji + Lucide) ─────────────────────────────────
+
+function IconPicker({
+  value,
+  onChange,
+  INPUT,
+  LABEL,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  INPUT: string;
+  LABEL: string;
+}) {
+  const [tab, setTab] = useState<"emoji" | "icons">("emoji");
+
+  return (
+    <div>
+      <label className={LABEL}>Ícono</label>
+      <div className="flex gap-1 mb-2">
+        <button type="button" onClick={() => setTab("emoji")}
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${tab === "emoji" ? "bg-indigo-100 text-indigo-700" : "text-gray-500 hover:bg-gray-100"}`}>
+          😀 Emoji coloridos
+        </button>
+        <button type="button" onClick={() => setTab("icons")}
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${tab === "icons" ? "bg-indigo-100 text-indigo-700" : "text-gray-500 hover:bg-gray-100"}`}>
+          ✏️ Íconos SVG
+        </button>
+      </div>
+      {tab === "emoji" ? (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(52px,1fr))] gap-1 p-2 bg-white rounded-xl border border-gray-200 max-h-52 overflow-y-auto">
+          {WHY_EMOJIS.map(({ emoji, label }) => (
+            <button key={emoji} type="button" title={label} onClick={() => onChange(emoji)}
+              className={`flex flex-col items-center gap-0.5 py-2 px-1 rounded-lg transition-all ${value === emoji ? "bg-indigo-100 ring-2 ring-indigo-400" : "hover:bg-gray-100"}`}>
+              <span className="text-2xl leading-none">{emoji}</span>
+              <span className="text-[8px] leading-tight text-center text-gray-500 truncate w-full">{label}</span>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(56px,1fr))] gap-1 p-2 bg-white rounded-xl border border-gray-200 max-h-52 overflow-y-auto">
+          {Object.entries(WHY_ICONS).map(([name, { label, Icon }]) => (
+            <button key={name} type="button" title={label} onClick={() => onChange(name)}
+              className={`flex flex-col items-center gap-0.5 py-2 px-1 rounded-lg transition-all ${value === name ? "bg-indigo-100 ring-2 ring-indigo-400" : "hover:bg-gray-100"}`}>
+              <Icon size={18} strokeWidth={1.5} className={value === name ? "text-indigo-600" : "text-gray-500"} />
+              <span className="text-[8px] leading-tight text-center text-gray-500 truncate w-full">{label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      <p className="text-[11px] text-gray-400 mt-1.5">O pegá cualquier emoji personalizado:</p>
+      <input
+        value={WHY_ICONS[value] || WHY_EMOJIS.find(e => e.emoji === value) ? "" : value}
+        onChange={e => onChange(e.target.value)}
+        placeholder="🦋"
+        className={`${INPUT} mt-1 text-lg`}
+        maxLength={8}
+      />
+    </div>
   );
 }
 

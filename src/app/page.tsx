@@ -9,6 +9,7 @@ import { HeroBanner } from "@/components/catalog/HeroBanner";
 import { ProductGrid } from "@/components/catalog/ProductGrid";
 import { WhyChooseUs } from "@/components/catalog/WhyChooseUs";
 import { FAQ } from "@/components/catalog/FAQ";
+import { WelcomeModal } from "@/components/catalog/WelcomeModal";
 import { CartButton } from "@/components/cart/CartButton";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { WhatsAppButton } from "@/components/catalog/WhatsAppButton";
@@ -279,6 +280,18 @@ export default async function Home({
         );
       })()}
 
+      {s?.welcomeEnabled && (
+        <WelcomeModal
+          tenantSubdomain={tenant.subdomain}
+          tenantName={tenant.name}
+          primaryColor={tenant.primaryColor ?? "#111827"}
+          title={s.welcomeTitle ?? "¡Bienvenida/o! 🎉"}
+          subtitle={s.welcomeSubtitle ?? "Suscribite y obtené un descuento exclusivo"}
+          message={s.welcomeMessage ?? ""}
+          discountPercent={s.welcomeDiscountPercent ?? null}
+          delaySeconds={s.welcomeDelaySeconds ?? 3}
+        />
+      )}
       {tenant.whatsappNumber && <WhatsAppButton whatsappNumber={tenant.whatsappNumber} />}
       <CartButton />
       <CartDrawer
