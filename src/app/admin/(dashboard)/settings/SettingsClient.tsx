@@ -483,6 +483,7 @@ export function SettingsClient({ defaults }: Props) {
                       className={INPUT}
                     />
                   </div>
+                </div>
                 <div>
                   <label className={LABEL}>Descripción</label>
                   <input
@@ -513,24 +514,45 @@ export function SettingsClient({ defaults }: Props) {
           <p className="text-xs text-gray-400 mt-0.5">Color de fondo de la sección inferior del catálogo</p>
         </div>
         <form onSubmit={handleFooter} className="space-y-4">
-          <div className="flex items-center gap-4">
+          {/* Presets rápidos */}
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { label: "Blanco", color: "#ffffff" },
+              { label: "Gris claro", color: "#f9fafb" },
+              { label: "Gris medio", color: "#e5e7eb" },
+              { label: "Gris oscuro", color: "#374151" },
+              { label: "Negro suave", color: "#0f0f0f" },
+              { label: "Negro puro", color: "#000000" },
+            ].map(({ label, color }) => (
+              <button
+                key={color}
+                type="button"
+                onClick={(e) => {
+                  const form = (e.target as HTMLElement).closest("form")!;
+                  (form.querySelector("input[name=footer_bg_color]") as HTMLInputElement).value = color;
+                }}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 hover:border-gray-400 text-xs font-medium text-gray-700 transition-all"
+              >
+                <span className="w-5 h-5 rounded-md border border-gray-200 flex-shrink-0" style={{ backgroundColor: color }} />
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-3">
             <input
               type="color"
               name="footer_bg_color"
               defaultValue={defaults.footerBgColor}
-              className="h-10 w-16 rounded-xl border border-gray-200 cursor-pointer p-1"
+              className="h-10 w-14 rounded-xl border border-gray-200 cursor-pointer p-1"
             />
-            <div className="text-sm text-gray-500 space-y-0.5">
-              <p>Color actual: <span className="font-mono text-gray-700">{defaults.footerBgColor}</span></p>
-              <p className="text-xs text-gray-400">Tip: negro (#0f0f0f) combina bien con la sección oscura de arriba</p>
-            </div>
+            <p className="text-xs text-gray-400">O elegí un color personalizado. El texto se adapta automáticamente al fondo.</p>
           </div>
           <button
             type="submit"
             disabled={footerPending}
             className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-indigo-700 disabled:opacity-60 transition-colors"
           >
-            {footerPending ? "Guardando…" : "Guardar color"}
+            {footerPending ? "Guardando…" : "Guardar color del footer"}
           </button>
         </form>
       </section>

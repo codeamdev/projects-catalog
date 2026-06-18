@@ -42,14 +42,22 @@ export default async function CatalogLayout({ children }: { children: React.Reac
 
       <main>{children}</main>
 
-      <footer className="mt-16 border-t border-gray-100 py-10" style={{ backgroundColor: s?.footerBgColor ?? "#f9fafb" }}>
-        <div className="max-w-screen-xl mx-auto px-4 text-center">
-          <p className="font-bold text-gray-900 mb-1">{tenant.name}</p>
-          <p className="text-gray-400 text-sm">
-            © {new Date().getFullYear()} {tenant.name}. Todos los derechos reservados.
-          </p>
-        </div>
-      </footer>
+      {(() => {
+        const bg = s?.footerBgColor ?? "#f9fafb";
+        const h = bg.replace("#", "");
+        const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+        const dark = (0.299 * r + 0.587 * g + 0.114 * b) / 255 < 0.5;
+        return (
+          <footer className="mt-16 border-t py-10" style={{ backgroundColor: bg, borderColor: dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)" }}>
+            <div className="max-w-screen-xl mx-auto px-4 text-center">
+              <p className="font-bold mb-1" style={{ color: dark ? "#ffffff" : "#111827" }}>{tenant.name}</p>
+              <p className="text-sm" style={{ color: dark ? "#a1a1aa" : "#6b7280" }}>
+                © {new Date().getFullYear()} {tenant.name}. Todos los derechos reservados.
+              </p>
+            </div>
+          </footer>
+        );
+      })()}
 
       {tenant.whatsappNumber && <WhatsAppButton whatsappNumber={tenant.whatsappNumber} />}
       <CartButton />
