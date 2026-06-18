@@ -7,8 +7,7 @@ import { ImageUpload } from "@/components/admin/ImageUpload";
 import { MultiImageUpload } from "@/components/admin/MultiImageUpload";
 import { VideoUpload } from "@/components/admin/VideoUpload";
 import { updateAllSettings } from "@/app/api/admin/actions";
-import { WHY_ICONS } from "@/components/catalog/WhyChooseUs";
-import { Truck } from "lucide-react";
+import { WHY_EMOJIS } from "@/components/catalog/WhyChooseUs";
 
 const INPUT = "w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300";
 const LABEL = "block text-sm font-medium text-gray-700 mb-1";
@@ -79,9 +78,10 @@ export function SettingsClient({ defaults }: Props) {
 
   // Why Choose Us
   const [whyEnabled, setWhyEnabled] = useState(defaults.whyChooseEnabled);
-  const [whyIconStyle, setWhyIconStyle] = useState(defaults.whyChooseIconStyle ?? "color");
+  const [whyIconStyle, setWhyIconStyle] = useState(defaults.whyChooseIconStyle ?? "plain");
   const [whyItems, setWhyItems] = useState<WhyItem[]>(defaults.whyChooseItems);
   const [newWhy, setNewWhy] = useState<WhyItem | null>(null);
+  const DEFAULT_EMOJI = WHY_EMOJIS[0].emoji;
 
   // FAQ
   const [faqEnabled, setFaqEnabled] = useState(defaults.faqEnabled);
@@ -115,10 +115,9 @@ export function SettingsClient({ defaults }: Props) {
   }
 
   const ICON_TYPES = [
-    { id: "color",        label: "Color",          desc: "Usa el color de marca" },
-    { id: "dark",         label: "Oscuro",          desc: "Negro/gris neutro" },
-    { id: "circle-color", label: "Círculo color",   desc: "Círculo con color de marca" },
-    { id: "circle-dark",  label: "Círculo oscuro",  desc: "Círculo negro" },
+    { id: "plain",        label: "Sin fondo",      desc: "Emoji grande, limpio" },
+    { id: "circle-soft",  label: "Círculo suave",  desc: "Fondo claro de marca" },
+    { id: "circle-color", label: "Círculo color",  desc: "Círculo sólido de marca" },
   ] as const;
 
   return (
@@ -339,30 +338,24 @@ export function SettingsClient({ defaults }: Props) {
           {/* Razones — read-only list */}
           <div className="space-y-2">
             <label className={`${LABEL} mb-0`}>Razones (hasta 4)</label>
-            {whyItems.map((item, i) => {
-              const entry = WHY_ICONS[item.icon];
-              const Icon = entry?.Icon ?? Truck;
-              return (
-                <div key={i} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50">
-                  <div className="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center flex-shrink-0">
-                    <Icon size={18} strokeWidth={1.5} className="text-gray-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-800 truncate">{item.title}</p>
-                    {item.description && <p className="text-xs text-gray-400 truncate">{item.description}</p>}
-                  </div>
-                  <button type="button" onClick={() => setWhyItems(whyItems.filter((_, j) => j !== i))}
-                    className="text-xs text-red-400 hover:text-red-600 flex-shrink-0 px-2 py-1 rounded-lg hover:bg-red-50 transition-colors">
-                    Quitar
-                  </button>
+            {whyItems.map((item, i) => (
+              <div key={i} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50">
+                <span className="text-2xl leading-none w-9 text-center flex-shrink-0">{item.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-800 truncate">{item.title}</p>
+                  {item.description && <p className="text-xs text-gray-400 truncate">{item.description}</p>}
                 </div>
-              );
-            })}
+                <button type="button" onClick={() => setWhyItems(whyItems.filter((_, j) => j !== i))}
+                  className="text-xs text-red-400 hover:text-red-600 flex-shrink-0 px-2 py-1 rounded-lg hover:bg-red-50 transition-colors">
+                  Quitar
+                </button>
+              </div>
+            ))}
 
             {/* Formulario para añadir nueva razón */}
             {whyItems.length < 4 && (
               newWhy === null ? (
-                <button type="button" onClick={() => setNewWhy({ icon: "star", title: "", description: "" })}
+                <button type="button" onClick={() => setNewWhy({ icon: DEFAULT_EMOJI, title: "", description: "" })}
                   className="w-full py-2.5 rounded-xl border-2 border-dashed border-gray-200 text-sm text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50 font-medium transition-all">
                   + Agregar razón
                 </button>
@@ -370,19 +363,27 @@ export function SettingsClient({ defaults }: Props) {
                 <div className="rounded-xl border-2 border-indigo-200 bg-indigo-50/30 p-4 space-y-3">
                   <p className="text-xs font-semibold text-indigo-700">Nueva razón</p>
 
-                  {/* Icon picker */}
+                  {/* Emoji picker */}
                   <div>
                     <label className={LABEL}>Ícono</label>
-                    <div className="grid grid-cols-[repeat(auto-fill,minmax(56px,1fr))] gap-1 p-2 bg-white rounded-xl border border-gray-200 max-h-48 overflow-y-auto">
-                      {Object.entries(WHY_ICONS).map(([name, { label, Icon }]) => (
-                        <button key={name} type="button" title={label}
-                          onClick={() => setNewWhy({ ...newWhy, icon: name })}
-                          className={`flex flex-col items-center gap-0.5 py-2 px-1 rounded-lg transition-all ${newWhy.icon === name ? "bg-indigo-100 text-indigo-700 ring-2 ring-indigo-400" : "hover:bg-gray-100 text-gray-500"}`}>
-                          <Icon size={18} strokeWidth={1.5} />
-                          <span className="text-[8px] leading-tight text-center truncate w-full">{label}</span>
+                    <div className="grid grid-cols-[repeat(auto-fill,minmax(52px,1fr))] gap-1 p-2 bg-white rounded-xl border border-gray-200 max-h-52 overflow-y-auto">
+                      {WHY_EMOJIS.map(({ emoji, label }) => (
+                        <button key={emoji} type="button" title={label}
+                          onClick={() => setNewWhy({ ...newWhy, icon: emoji })}
+                          className={`flex flex-col items-center gap-0.5 py-2 px-1 rounded-lg transition-all ${newWhy.icon === emoji ? "bg-indigo-100 ring-2 ring-indigo-400" : "hover:bg-gray-100"}`}>
+                          <span className="text-2xl leading-none">{emoji}</span>
+                          <span className="text-[8px] leading-tight text-center text-gray-500 truncate w-full">{label}</span>
                         </button>
                       ))}
                     </div>
+                    <p className="text-[11px] text-gray-400 mt-1.5">También podés escribir cualquier emoji directamente en el campo de título, o pegar uno aquí:</p>
+                    <input
+                      value={newWhy.icon.length > 2 ? "" : newWhy.icon}
+                      onChange={e => setNewWhy({ ...newWhy, icon: e.target.value })}
+                      placeholder="Pegá un emoji personalizado..."
+                      className={`${INPUT} mt-1 text-lg`}
+                      maxLength={8}
+                    />
                   </div>
 
                   <div>
@@ -415,32 +416,28 @@ export function SettingsClient({ defaults }: Props) {
 
           {/* Tipo de ícono */}
           <div>
-            <label className={LABEL}>Tipo de ícono</label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {ICON_TYPES.map(({ id, label, desc }) => {
-                const PreviewIcon = Truck;
-                return (
-                  <button key={id} type="button" onClick={() => setWhyIconStyle(id)}
-                    className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 text-center transition-all ${whyIconStyle === id ? "border-indigo-500 bg-indigo-50" : "border-gray-200 hover:border-gray-300 bg-white"}`}>
-                    {id === "circle-color" && (
-                      <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center">
-                        <PreviewIcon size={16} strokeWidth={1.8} color="white" />
-                      </div>
-                    )}
-                    {id === "circle-dark" && (
-                      <div className="w-9 h-9 rounded-xl bg-gray-900 flex items-center justify-center">
-                        <PreviewIcon size={16} strokeWidth={1.8} color="white" />
-                      </div>
-                    )}
-                    {id === "color" && <PreviewIcon size={24} strokeWidth={1.8} className="text-indigo-600" />}
-                    {id === "dark"  && <PreviewIcon size={24} strokeWidth={1.8} className="text-gray-900" />}
-                    <div>
-                      <p className={`text-xs font-semibold leading-tight ${whyIconStyle === id ? "text-indigo-700" : "text-gray-700"}`}>{label}</p>
-                      <p className="text-[10px] text-gray-400 mt-0.5">{desc}</p>
+            <label className={LABEL}>Estilo de fondo</label>
+            <div className="grid grid-cols-3 gap-2">
+              {ICON_TYPES.map(({ id, label, desc }) => (
+                <button key={id} type="button" onClick={() => setWhyIconStyle(id)}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 text-center transition-all ${whyIconStyle === id ? "border-indigo-500 bg-indigo-50" : "border-gray-200 hover:border-gray-300 bg-white"}`}>
+                  {id === "plain" && <span className="text-3xl leading-none">🚚</span>}
+                  {id === "circle-soft" && (
+                    <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#e0e7ff" }}>
+                      <span className="text-2xl leading-none">🚚</span>
                     </div>
-                  </button>
-                );
-              })}
+                  )}
+                  {id === "circle-color" && (
+                    <div className="w-11 h-11 rounded-xl bg-indigo-600 flex items-center justify-center">
+                      <span className="text-2xl leading-none">🚚</span>
+                    </div>
+                  )}
+                  <div>
+                    <p className={`text-xs font-semibold leading-tight ${whyIconStyle === id ? "text-indigo-700" : "text-gray-700"}`}>{label}</p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">{desc}</p>
+                  </div>
+                </button>
+              ))}
             </div>
           </div>
         </section>
