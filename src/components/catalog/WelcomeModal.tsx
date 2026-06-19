@@ -25,7 +25,7 @@ export function WelcomeModal({
   delaySeconds,
 }: Props) {
   const [show, setShow] = useState(false);
-  const [step, setStep] = useState<"form" | "success">("form");
+  const [step, setStep] = useState<"form" | "success" | "already">("form");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -63,7 +63,7 @@ export function WelcomeModal({
       }
       setCode(data.discountCode ?? "");
       setPercent(data.percent);
-      setStep("success");
+      setStep(data.alreadySubscribed ? "already" : "success");
     } catch {
       setError("Error de conexión. Intentá de nuevo.");
     } finally {
@@ -161,7 +161,7 @@ export function WelcomeModal({
               Al suscribirte aceptás recibir emails de {tenantName}. Podés darte de baja cuando quieras.
             </p>
           </div>
-        ) : (
+        ) : step === "success" ? (
           <div className="px-7 py-10 text-center">
             <div className="text-6xl mb-4">🎉</div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">¡Ya estás adentro!</h2>
@@ -182,6 +182,29 @@ export function WelcomeModal({
               style={{ background: primaryColor }}
             >
               ¡Ver el catálogo!
+            </button>
+          </div>
+        ) : (
+          /* already subscribed */
+          <div className="px-7 py-10 text-center">
+            <div className="text-6xl mb-4">✉️</div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">¡Ya estás suscrito!</h2>
+            <p className="text-gray-500 text-sm mb-6">
+              Este correo ya está registrado en nuestra lista.
+            </p>
+            {code && (
+              <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl py-5 px-6 mb-6">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Tu código de descuento</p>
+                <p className="text-3xl font-black text-gray-900 tracking-widest font-mono">{code}</p>
+                {percent && <p className="text-sm text-gray-500 mt-1">{percent}% de descuento</p>}
+              </div>
+            )}
+            <button
+              onClick={dismiss}
+              className="w-full py-3.5 rounded-xl font-bold text-white text-sm shadow-sm"
+              style={{ background: primaryColor }}
+            >
+              Ver el catálogo
             </button>
           </div>
         )}

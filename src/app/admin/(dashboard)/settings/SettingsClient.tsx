@@ -67,8 +67,7 @@ interface Props {
     welcomeDiscountPercent: number | null;
     welcomeMessage: string;
     welcomeDelaySeconds: number;
-    welcomeCodePrefix: string;
-    welcomeCodeSuffix: string;
+    welcomeCode: string;
   };
 }
 
@@ -525,13 +524,9 @@ export function SettingsClient({ defaults }: Props) {
               <p className="text-[11px] text-gray-400 mt-1">Deja vacío para no mostrar descuento</p>
             </div>
             <div>
-              <label className={LABEL}>Prefijo del código</label>
-              <input name="welcome_code_prefix" maxLength={10} defaultValue={defaults.welcomeCodePrefix} placeholder="Ej: DESC" className={INPUT} />
-            </div>
-            <div>
-              <label className={LABEL}>Sufijo fijo (opcional)</label>
-              <input name="welcome_code_suffix" maxLength={10} defaultValue={defaults.welcomeCodeSuffix} placeholder="Ej: 2026" className={INPUT} />
-              <p className="text-[11px] text-gray-400 mt-1">Vacío = aleatorio único por suscriptor</p>
+              <label className={LABEL}>Código de descuento</label>
+              <input name="welcome_code" maxLength={30} defaultValue={defaults.welcomeCode ?? ""} placeholder="Ej: BIENVENIDA20" className={INPUT} />
+              <p className="text-[11px] text-gray-400 mt-1">Todos los suscriptores reciben este mismo código</p>
             </div>
             <div>
               <label className={LABEL}>Demora antes de mostrar (seg)</label>

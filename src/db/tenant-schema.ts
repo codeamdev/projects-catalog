@@ -140,6 +140,7 @@ export const settings = pgTable("settings", {
   welcomeDelaySeconds: smallint("welcome_delay_seconds").default(3),
   welcomeCodePrefix: text("welcome_code_prefix").default("DESC"),
   welcomeCodeSuffix: text("welcome_code_suffix"),
+  welcomeCode: text("welcome_code"),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (t) => [
   unique("settings_singleton_unique").on(t.singleton),

@@ -710,10 +710,8 @@ export async function updateWelcomeSettings(formData: FormData): Promise<ActionR
     const welcomeDiscountPercent = rawPercent ? Math.min(99, Math.max(1, parseInt(rawPercent, 10))) || null : null;
     const rawDelay = formData.get("welcome_delay_seconds") as string;
     const welcomeDelaySeconds = rawDelay ? Math.min(30, Math.max(0, parseInt(rawDelay, 10))) : 3;
-    const welcomeCodePrefix = ((formData.get("welcome_code_prefix") as string) ?? "DESC")
-      .toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10) || "DESC";
-    const welcomeCodeSuffix = ((formData.get("welcome_code_suffix") as string) ?? "")
-      .toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10) || null;
+    const welcomeCode = ((formData.get("welcome_code") as string) ?? "")
+      .toUpperCase().replace(/[^A-Z0-9\-]/g, "").slice(0, 30) || null;
 
     const vals = {
       welcomeEnabled: formData.get("welcome_enabled") === "1",
@@ -722,8 +720,7 @@ export async function updateWelcomeSettings(formData: FormData): Promise<ActionR
       welcomeDiscountPercent,
       welcomeMessage: (formData.get("welcome_message") as string)?.trim() || null,
       welcomeDelaySeconds,
-      welcomeCodePrefix,
-      welcomeCodeSuffix,
+      welcomeCode,
       updatedAt: new Date(),
     };
 

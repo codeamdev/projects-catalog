@@ -7,13 +7,6 @@ import { sendWelcomeEmail } from "@/lib/email";
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 año
 
-function generateCode(prefix: string): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let suffix = "";
-  for (let i = 0; i < 6; i++) suffix += chars[Math.floor(Math.random() * chars.length)];
-  return prefix ? `${prefix}-${suffix}` : suffix;
-}
-
 export async function POST(req: NextRequest) {
   const subdomain = req.headers.get("x-tenant-subdomain");
   if (!subdomain) return NextResponse.json({ error: "Tenant no encontrado" }, { status: 400 });
@@ -33,8 +26,7 @@ export async function POST(req: NextRequest) {
     db.select({
       welcomeEnabled: settings.welcomeEnabled,
       welcomeDiscountPercent: settings.welcomeDiscountPercent,
-      welcomeCodePrefix: settings.welcomeCodePrefix,
-      welcomeCodeSuffix: settings.welcomeCodeSuffix,
+      welcomeCode: settings.welcomeCode,
     }).from(settings).limit(1)
   );
 
@@ -42,44 +34,51 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Suscripción no disponible" }, { status: 400 });
   }
 
-  const prefix = (s.welcomeCodePrefix ?? "DESC").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10);
-  const rawSuffix = (s.welcomeCodeSuffix ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10);
-  const discountCode = rawSuffix
-    ? (prefix ? `${prefix}-${rawSuffix}` : rawSuffix)
-    : generateCode(prefix);
-  let finalCode = discountCode;
+  // El código configurado por el admin (sin aleatoriedad)
+  const discountCode = s.welcomeCode?.trim().toUpperCase() || null;
 
   try {
+    // Verificar si ya está suscrito
     const [existing] = await withTenantDb(tenant.schemaName, (db) =>
-      db.select({ discountCode: subscribers.discountCode })
+      db.select({ id: subscribers.id, discountCode: subscribers.discountCode })
         .from(subscribers)
-        .where(eq(subscribers.email, email))
+        .where(eq(subscribers.email, email.toLowerCase()))
         .limit(1)
     );
 
     if (existing) {
-      finalCode = existing.discountCode ?? discountCode;
-    } else {
-      await withTenantDb(tenant.schemaName, (db) =>
-        db.insert(subscribers).values({
-          email,
-          name: name?.trim() || null,
-          discountCode,
-        })
-      );
+      // Ya suscrito — informar sin error, el modal lo maneja
+      const res = NextResponse.json({
+        ok: true,
+        alreadySubscribed: true,
+        discountCode: s.welcomeDiscountPercent ? (existing.discountCode ?? discountCode) : null,
+        percent: s.welcomeDiscountPercent ?? null,
+      });
+      res.cookies.set(`subscribed_${subdomain}`, "1", {
+        maxAge: COOKIE_MAX_AGE, path: "/", sameSite: "lax", httpOnly: false,
+      });
+      return res;
+    }
 
-      if (s.welcomeDiscountPercent) {
-        const [newSub] = await withTenantDb(tenant.schemaName, (db) =>
-          db.select({ unsubscribeToken: subscribers.unsubscribeToken })
-            .from(subscribers).where(eq(subscribers.email, email)).limit(1)
-        );
-        if (newSub) {
-          sendWelcomeEmail(
-            { name: tenant.name, subdomain: tenant.subdomain, logoUrl: tenant.logoUrl ?? null, primaryColor: tenant.primaryColor ?? "#111827" },
-            { email, name: name?.trim() || null, discountCode, unsubscribeToken: newSub.unsubscribeToken },
-            s.welcomeDiscountPercent
-          ).catch(() => { });
-        }
+    await withTenantDb(tenant.schemaName, (db) =>
+      db.insert(subscribers).values({
+        email: email.toLowerCase(),
+        name: name?.trim() || null,
+        discountCode,
+      })
+    );
+
+    if (s.welcomeDiscountPercent && discountCode) {
+      const [newSub] = await withTenantDb(tenant.schemaName, (db) =>
+        db.select({ unsubscribeToken: subscribers.unsubscribeToken })
+          .from(subscribers).where(eq(subscribers.email, email.toLowerCase())).limit(1)
+      );
+      if (newSub) {
+        sendWelcomeEmail(
+          { name: tenant.name, subdomain: tenant.subdomain, logoUrl: tenant.logoUrl ?? null, primaryColor: tenant.primaryColor ?? "#111827" },
+          { email: email.toLowerCase(), name: name?.trim() || null, discountCode, unsubscribeToken: newSub.unsubscribeToken },
+          s.welcomeDiscountPercent
+        ).catch(() => { });
       }
     }
   } catch {
@@ -88,16 +87,13 @@ export async function POST(req: NextRequest) {
 
   const res = NextResponse.json({
     ok: true,
-    discountCode: s.welcomeDiscountPercent ? finalCode : null,
+    alreadySubscribed: false,
+    discountCode: s.welcomeDiscountPercent ? discountCode : null,
     percent: s.welcomeDiscountPercent ?? null,
   });
 
-  // Cookie de larga duración para no volver a mostrar el popup en este navegador
   res.cookies.set(`subscribed_${subdomain}`, "1", {
-    maxAge: COOKIE_MAX_AGE,
-    path: "/",
-    sameSite: "lax",
-    httpOnly: false,
+    maxAge: COOKIE_MAX_AGE, path: "/", sameSite: "lax", httpOnly: false,
   });
 
   return res;
