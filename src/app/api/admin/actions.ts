@@ -1,6 +1,7 @@
-"use server";
+﻿"use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { CATALOG_TAG } from "@/lib/catalog-data";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
@@ -21,12 +22,12 @@ import {
 import type { CampaignData, TenantEmailInfo } from "@/lib/email";
 import { tenants } from "@/db/public-schema";
 
-// ── Tipos de retorno estructurado ─────────────────────────────
+// â”€â”€ Tipos de retorno estructurado â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export type ActionResult<T = void> =
   | { ok: true; data: T }
   | { ok: false; error: string };
 
-// ── Jerarquía de roles ────────────────────────────────────────
+// â”€â”€ JerarquÃ­a de roles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const ROLE_LEVEL: Record<string, number> = {
   EDITOR: 0,
   ADMIN: 1,
@@ -59,7 +60,7 @@ function toSlug(title: string) {
     .substring(0, 80);
 }
 
-// ── Productos ──────────────────────────────────────────────────────
+// â”€â”€ Productos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function toggleProductActive(
   productId: string,
@@ -155,10 +156,11 @@ export async function createProduct(formData: FormData): Promise<ActionResult> {
 
     revalidatePath("/admin/products");
     revalidatePath("/");
+    revalidateTag(CATALOG_TAG, {});
     return { ok: true, data: undefined };
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return { ok: false, error: "Datos del formulario inválidos" };
+      return { ok: false, error: "Datos del formulario invÃ¡lidos" };
     }
     return { ok: false, error: err instanceof Error ? err.message : "Error al crear producto" };
   }
@@ -227,10 +229,11 @@ export async function updateProduct(productId: string, formData: FormData): Prom
 
     revalidatePath("/admin/products");
     revalidatePath("/");
+    revalidateTag(CATALOG_TAG, {});
     return { ok: true, data: undefined };
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return { ok: false, error: "Datos del formulario inválidos" };
+      return { ok: false, error: "Datos del formulario invÃ¡lidos" };
     }
     return { ok: false, error: err instanceof Error ? err.message : "Error al actualizar producto" };
   }
@@ -244,13 +247,14 @@ export async function deleteProduct(productId: string): Promise<ActionResult> {
     );
     revalidatePath("/admin/products");
     revalidatePath("/");
+    revalidateTag(CATALOG_TAG, {});
     return { ok: true, data: undefined };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Error al eliminar producto" };
   }
 }
 
-// ── Categorías ────────────────────────────────────────────────────
+// â”€â”€ CategorÃ­as â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function createCategory(formData: FormData): Promise<ActionResult> {
   try {
@@ -265,9 +269,10 @@ export async function createCategory(formData: FormData): Promise<ActionResult> 
     revalidatePath("/admin/categories");
     revalidatePath("/admin/products");
     revalidatePath("/");
+    revalidateTag(CATALOG_TAG, {});
     return { ok: true, data: undefined };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "Error al crear categoría" };
+    return { ok: false, error: err instanceof Error ? err.message : "Error al crear categorÃ­a" };
   }
 }
 
@@ -280,9 +285,10 @@ export async function deleteCategory(categoryId: string): Promise<ActionResult> 
     revalidatePath("/admin/categories");
     revalidatePath("/admin/products");
     revalidatePath("/");
+    revalidateTag(CATALOG_TAG, {});
     return { ok: true, data: undefined };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "Error al eliminar categoría" };
+    return { ok: false, error: err instanceof Error ? err.message : "Error al eliminar categorÃ­a" };
   }
 }
 
@@ -297,13 +303,14 @@ export async function updateCategoryImage(
     );
     revalidatePath("/admin/categories");
     revalidatePath("/");
+    revalidateTag(CATALOG_TAG, {});
     return { ok: true, data: undefined };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Error al actualizar imagen" };
   }
 }
 
-// ── Pedidos ───────────────────────────────────────────────────────
+// â”€â”€ Pedidos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function updateOrderStatus(
   orderId: string,
@@ -321,7 +328,7 @@ export async function updateOrderStatus(
   }
 }
 
-// ── Ajustes ───────────────────────────────────────────────────────
+// â”€â”€ Ajustes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function updateSettings(formData: FormData): Promise<ActionResult> {
   try {
@@ -364,6 +371,7 @@ export async function updateSettings(formData: FormData): Promise<ActionResult> 
     );
 
     revalidatePath("/");
+    revalidateTag(CATALOG_TAG, {});
     revalidatePath("/admin/settings");
     return { ok: true, data: undefined };
   } catch (err) {
@@ -390,10 +398,11 @@ export async function updateDiscountCode(formData: FormData): Promise<ActionResu
     );
 
     revalidatePath("/");
+    revalidateTag(CATALOG_TAG, {});
     revalidatePath("/admin/settings");
     return { ok: true, data: undefined };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "Error al guardar código de descuento" };
+    return { ok: false, error: err instanceof Error ? err.message : "Error al guardar cÃ³digo de descuento" };
   }
 }
 
@@ -411,6 +420,7 @@ export async function updateCategoriesStyle(formData: FormData): Promise<ActionR
         .onConflictDoUpdate({ target: settings.singleton, set: styleValues })
     );
     revalidatePath("/");
+    revalidateTag(CATALOG_TAG, {});
     revalidatePath("/admin/settings");
     return { ok: true, data: undefined };
   } catch (err) {
@@ -418,7 +428,7 @@ export async function updateCategoriesStyle(formData: FormData): Promise<ActionR
   }
 }
 
-// ── Configuración del tenant (WhatsApp, color, logo) ─────────────
+// â”€â”€ ConfiguraciÃ³n del tenant (WhatsApp, color, logo) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function updateTenantConfig(formData: FormData): Promise<ActionResult> {
   try {
@@ -436,14 +446,15 @@ export async function updateTenantConfig(formData: FormData): Promise<ActionResu
       .where(eq(tenants.schemaName, session.user.schemaName));
 
     revalidatePath("/");
+    revalidateTag(CATALOG_TAG, {});
     revalidatePath("/admin/settings");
     return { ok: true, data: undefined };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "Error al guardar configuración" };
+    return { ok: false, error: err instanceof Error ? err.message : "Error al guardar configuraciÃ³n" };
   }
 }
 
-// ── Sección "¿Por qué elegirnos?" ────────────────────────────────
+// â”€â”€ SecciÃ³n "Â¿Por quÃ© elegirnos?" â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function updateWhyChooseUs(formData: FormData): Promise<ActionResult> {
   try {
@@ -460,7 +471,7 @@ export async function updateWhyChooseUs(formData: FormData): Promise<ActionResul
       try {
         const parsed = JSON.parse(itemsRaw);
         if (Array.isArray(parsed) && parsed.length > 0) whyChooseItems = itemsRaw;
-      } catch { /* inválido — ignorar */ }
+      } catch { /* invÃ¡lido â€” ignorar */ }
     }
 
     const whyChooseEnabled = formData.get("why_choose_enabled") === "1";
@@ -474,10 +485,11 @@ export async function updateWhyChooseUs(formData: FormData): Promise<ActionResul
     );
 
     revalidatePath("/");
+    revalidateTag(CATALOG_TAG, {});
     revalidatePath("/admin/settings");
     return { ok: true, data: undefined };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "Error al guardar sección" };
+    return { ok: false, error: err instanceof Error ? err.message : "Error al guardar secciÃ³n" };
   }
 }
 
@@ -493,6 +505,7 @@ export async function updateFooterColor(formData: FormData): Promise<ActionResul
         .onConflictDoUpdate({ target: settings.singleton, set: vals })
     );
     revalidatePath("/");
+    revalidateTag(CATALOG_TAG, {});
     revalidatePath("/admin/settings");
     return { ok: true, data: undefined };
   } catch (err) {
@@ -500,14 +513,14 @@ export async function updateFooterColor(formData: FormData): Promise<ActionResul
   }
 }
 
-// ── Guardar todos los ajustes en un solo paso ─────────────────────
+// â”€â”€ Guardar todos los ajustes en un solo paso â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function updateAllSettings(formData: FormData): Promise<ActionResult> {
   try {
     const session = await requireRole("ADMIN");
     const schema = session.user.schemaName;
 
-    // Hero: video tiene prioridad sobre imágenes
+    // Hero: video tiene prioridad sobre imÃ¡genes
     const videoUrl = ((formData.get("hero_video_url") as string) ?? "").trim();
     const imageUrls = ((formData.get("hero_images") as string) ?? "").trim();
     const heroImageUrl = videoUrl || imageUrls || null;
@@ -610,6 +623,7 @@ export async function updateAllSettings(formData: FormData): Promise<ActionResul
     ]);
 
     revalidatePath("/");
+    revalidateTag(CATALOG_TAG, {});
     revalidatePath("/admin/settings");
     return { ok: true, data: undefined };
   } catch (err) {
@@ -617,7 +631,7 @@ export async function updateAllSettings(formData: FormData): Promise<ActionResul
   }
 }
 
-// ── Filtros ───────────────────────────────────────────────────────
+// â”€â”€ Filtros â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function createFilterGroup(formData: FormData): Promise<ActionResult> {
   try {
@@ -644,6 +658,7 @@ export async function deleteFilterGroup(groupId: string): Promise<ActionResult> 
     revalidatePath("/admin/filters");
     revalidatePath("/admin/products");
     revalidatePath("/");
+    revalidateTag(CATALOG_TAG, {});
     return { ok: true, data: undefined };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Error al eliminar grupo" };
@@ -663,7 +678,7 @@ export async function createFilterOption(groupId: string, formData: FormData): P
     revalidatePath("/admin/products");
     return { ok: true, data: undefined };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "Error al crear opción" };
+    return { ok: false, error: err instanceof Error ? err.message : "Error al crear opciÃ³n" };
   }
 }
 
@@ -675,15 +690,16 @@ export async function deleteFilterOption(optionId: string): Promise<ActionResult
     );
     revalidatePath("/admin/filters");
     revalidatePath("/");
+    revalidateTag(CATALOG_TAG, {});
     return { ok: true, data: undefined };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "Error al eliminar opción" };
+    return { ok: false, error: err instanceof Error ? err.message : "Error al eliminar opciÃ³n" };
   }
 }
 
-// ── Admin user (seed/setup) ───────────────────────────────────────
+// â”€â”€ Admin user (seed/setup) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-// ── Ajustes generales (welcome popup) ────────────────────────────
+// â”€â”€ Ajustes generales (welcome popup) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function updateWelcomeSettings(formData: FormData): Promise<ActionResult> {
   try {
@@ -717,6 +733,7 @@ export async function updateWelcomeSettings(formData: FormData): Promise<ActionR
     );
 
     revalidatePath("/");
+    revalidateTag(CATALOG_TAG, {});
     revalidatePath("/admin/settings");
     return { ok: true, data: undefined };
   } catch (err) {
@@ -724,7 +741,7 @@ export async function updateWelcomeSettings(formData: FormData): Promise<ActionR
   }
 }
 
-// ── Campañas de email ─────────────────────────────────────────────
+// â”€â”€ CampaÃ±as de email â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function sendEmailCampaign(formData: FormData): Promise<ActionResult<{ sent: number; failed: number }>> {
   try {
@@ -737,7 +754,7 @@ export async function sendEmailCampaign(formData: FormData): Promise<ActionResul
     const message = (formData.get("message") as string)?.trim();
 
     if (!subject || !title || !message) {
-      return { ok: false, error: "Asunto, título y mensaje son requeridos" };
+      return { ok: false, error: "Asunto, tÃ­tulo y mensaje son requeridos" };
     }
 
     // Fetch active subscribers
@@ -834,3 +851,5 @@ export async function createAdminUser(
       .onConflictDoNothing()
   );
 }
+
+

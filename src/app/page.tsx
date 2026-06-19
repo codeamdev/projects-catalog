@@ -3,9 +3,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import type { Metadata } from "next";
 import { getCurrentTenant } from "@/lib/tenant";
-import { getProducts, getCategories, getFilterGroups, getProductFilterMap } from "@/lib/products";
-import { withTenantDb } from "@/db";
-import { settings } from "@/db/tenant-schema";
+import { getCatalogData } from "@/lib/catalog-data";
 import { HeroBanner } from "@/components/catalog/HeroBanner";
 import { ProductGrid } from "@/components/catalog/ProductGrid";
 import { WhyChooseUs } from "@/components/catalog/WhyChooseUs";
@@ -19,13 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const tenant = await getCurrentTenant();
   if (!tenant) return { title: "Catálogo" };
 
-  const [s] = await withTenantDb(tenant.schemaName, (db) =>
-    db.select({
-      metaTitle: settings.metaTitle,
-      metaDescription: settings.metaDescription,
-      googleSiteVerification: settings.googleSiteVerification,
-    }).from(settings).limit(1)
-  );
+  const { s } = await getCatalogData(tenant.schemaName);
   return {
     title: s?.metaTitle || tenant.name,
     description: s?.metaDescription || undefined,
@@ -100,13 +92,8 @@ export default async function Home({
 
   const { categoria } = await searchParams;
 
-  const [[s], allProducts, categoryList, filterGroupList, productFilterMap] = await Promise.all([
-    withTenantDb(tenant.schemaName, (db) => db.select().from(settings).limit(1)),
-    getProducts(tenant.schemaName),
-    getCategories(tenant.schemaName),
-    getFilterGroups(tenant.schemaName),
-    getProductFilterMap(tenant.schemaName),
-  ]);
+  const { s, allProducts, categoryList, filterGroupList, productFilterMap } =
+    await getCatalogData(tenant.schemaName);
 
   // ── Hero desktop: video o carrusel de imágenes ──────────────
   const heroImageUrl = s?.heroImageUrl ?? null;
