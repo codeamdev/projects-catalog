@@ -78,16 +78,41 @@ export const WHY_EMOJIS = [
   { emoji: "🌊", label: "Frescura" },  { emoji: "🔔", label: "Novedades" },
 ];
 
-// Detecta si es un ícono Lucide (nombre) o emoji/texto
-function isLucideName(icon: string): icon is keyof typeof WHY_ICONS {
-  return icon in WHY_ICONS;
+// Aliases para nombres almacenados en versiones anteriores
+const ICON_ALIASES: Record<string, string> = {
+  // variantes sin camelCase
+  shield: "shieldCheck", Shield: "shieldCheck", ShieldCheck: "shieldCheck",
+  badge: "badgeCheck", Badge: "badgeCheck", BadgeCheck: "badgeCheck",
+  check: "checkCircle", Check: "checkCircle", CheckCircle: "checkCircle",
+  refresh: "refreshCw", Refresh: "refreshCw", RefreshCw: "refreshCw",
+  credit: "creditCard", CreditCard: "creditCard",
+  map: "mapPin", MapPin: "mapPin",
+  thumbs: "thumbsUp", ThumbsUp: "thumbsUp",
+  // PascalCase → camelCase
+  Truck: "truck", Star: "star", Heart: "heart", Gift: "gift",
+  Lock: "lock", Tag: "tag", Package: "package", Clock: "clock",
+  Phone: "phone", Users: "users", Zap: "zap", Leaf: "leaf",
+  Award: "award", Eye: "eye", Gem: "gem", Headphones: "headphones",
+  Sparkles: "sparkles", Store: "store", Percent: "percent",
+};
+
+function resolveIcon(icon: string): string {
+  if (icon in WHY_ICONS) return icon;
+  const alias = ICON_ALIASES[icon];
+  if (alias && alias in WHY_ICONS) return alias;
+  return icon;
+}
+
+function isLucideName(icon: string): boolean {
+  return resolveIcon(icon) in WHY_ICONS;
 }
 
 // Estilos: "plain" | "circle-soft" | "circle-color" (para emoji)
 //          "color" | "dark" | "circle-color" | "circle-dark" (para Lucide)
 function ItemIcon({ icon, style }: { icon: string; style: string }) {
+  const resolved = resolveIcon(icon);
   if (isLucideName(icon)) {
-    const { Icon } = WHY_ICONS[icon];
+    const { Icon } = WHY_ICONS[resolved];
     if (style === "circle-color" || style === "circle-soft") {
       return (
         <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
