@@ -804,6 +804,19 @@ export async function sendEmailCampaign(formData: FormData): Promise<ActionResul
   }
 }
 
+export async function deleteSubscriber(id: string): Promise<ActionResult<undefined>> {
+  try {
+    const session = await requireRole("ADMIN");
+    await withTenantDb(session.user.schemaName, (db) =>
+      db.delete(subscribers).where(eq(subscribers.id, id))
+    );
+    revalidatePath("/admin/subscribers");
+    return { ok: true, data: undefined };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Error al eliminar" };
+  }
+}
+
 export async function createAdminUser(
   schemaName: string,
   email: string,
