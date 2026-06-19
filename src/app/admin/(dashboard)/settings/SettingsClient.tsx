@@ -7,7 +7,7 @@ import { ImageUpload } from "@/components/admin/ImageUpload";
 import { MultiImageUpload } from "@/components/admin/MultiImageUpload";
 import { VideoUpload } from "@/components/admin/VideoUpload";
 import { updateAllSettings } from "@/app/api/admin/actions";
-import { WHY_EMOJIS, WHY_ICONS } from "@/components/catalog/WhyChooseUs";
+import { WHY_EMOJIS, WHY_ICONS, resolveIcon } from "@/components/catalog/WhyChooseUs";
 
 const INPUT = "w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300";
 const LABEL = "block text-sm font-medium text-gray-700 mb-1";
@@ -344,7 +344,9 @@ export function SettingsClient({ defaults }: Props) {
             <label className={`${LABEL} mb-0`}>Razones (hasta 4)</label>
             {whyItems.map((item, i) => (
               <div key={i} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50">
-                <span className="text-2xl leading-none w-9 text-center flex-shrink-0">{item.icon}</span>
+                <span className="text-2xl leading-none w-9 text-center flex-shrink-0 flex items-center justify-center">
+                  {(() => { const r = resolveIcon(item.icon); if (r in WHY_ICONS) { const { Icon } = WHY_ICONS[r]; return <Icon size={22} strokeWidth={1.8} className="text-gray-600" />; } return item.icon; })()}
+                </span>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-gray-800 truncate">{item.title}</p>
                   {item.description && <p className="text-xs text-gray-400 truncate">{item.description}</p>}

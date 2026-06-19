@@ -96,7 +96,7 @@ const ICON_ALIASES: Record<string, string> = {
   Sparkles: "sparkles", Store: "store", Percent: "percent",
 };
 
-function resolveIcon(icon: string): string {
+export function resolveIcon(icon: string): string {
   if (icon in WHY_ICONS) return icon;
   const alias = ICON_ALIASES[icon];
   if (alias && alias in WHY_ICONS) return alias;
