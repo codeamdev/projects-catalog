@@ -17,27 +17,37 @@ export async function POST(req: NextRequest) {
   const code = body.code?.trim().toUpperCase();
   if (!code) return NextResponse.json({ valid: false });
 
+  const [s] = await withTenantDb(tenant.schemaName, (db) =>
+    db.select({
+      welcomeDiscountPercent: settings.welcomeDiscountPercent,
+      welcomeCode: settings.welcomeCode,
+      discountCode: settings.discountCode,
+      discountCodePercent: settings.discountCodePercent,
+    }).from(settings).limit(1)
+  );
+
+  if (!s) return NextResponse.json({ valid: false });
+
+  // Código global del popup de bienvenida
+  if (s.welcomeCode?.toUpperCase() === code && s.welcomeDiscountPercent) {
+    return NextResponse.json({ valid: true, percent: s.welcomeDiscountPercent, type: "subscriber" });
+  }
+
+  // Código general del catálogo
+  if (s.discountCode?.toUpperCase() === code && s.discountCodePercent) {
+    return NextResponse.json({ valid: true, percent: s.discountCodePercent, type: "general" });
+  }
+
+  // Código único por suscriptor (para uso futuro)
   const [sub] = await withTenantDb(tenant.schemaName, (db) =>
-    db.select({ discountCode: subscribers.discountCode, discountUsedAt: subscribers.discountUsedAt })
+    db.select({ discountUsedAt: subscribers.discountUsedAt })
       .from(subscribers)
-      .where(and(
-        eq(subscribers.discountCode, code),
-        isNull(subscribers.unsubscribedAt),
-      ))
+      .where(and(eq(subscribers.discountCode, code), isNull(subscribers.unsubscribedAt)))
       .limit(1)
   );
 
   if (!sub) return NextResponse.json({ valid: false });
   if (sub.discountUsedAt) return NextResponse.json({ valid: false, error: "Este código ya fue utilizado" });
 
-  const [s] = await withTenantDb(tenant.schemaName, (db) =>
-    db.select({ welcomeDiscountPercent: settings.welcomeDiscountPercent })
-      .from(settings).limit(1)
-  );
-
-  return NextResponse.json({
-    valid: true,
-    percent: s?.welcomeDiscountPercent ?? 0,
-    type: "subscriber",
-  });
+  return NextResponse.json({ valid: true, percent: s.welcomeDiscountPercent ?? 0, type: "subscriber" });
 }
