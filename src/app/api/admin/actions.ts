@@ -610,6 +610,8 @@ export async function updateAllSettings(formData: FormData): Promise<ActionResul
         const d = formData.get("welcome_delay_seconds") as string;
         return d ? Math.min(30, Math.max(0, parseInt(d, 10))) : 3;
       })(),
+      welcomeCode: ((formData.get("welcome_code") as string) ?? "")
+        .toUpperCase().replace(/[^A-Z0-9\-]/g, "").slice(0, 30) || null,
       updatedAt: new Date(),
     };
 
