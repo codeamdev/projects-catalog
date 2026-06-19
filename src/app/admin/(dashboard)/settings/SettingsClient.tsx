@@ -67,6 +67,7 @@ interface Props {
     welcomeDiscountPercent: number | null;
     welcomeMessage: string;
     welcomeDelaySeconds: number;
+    welcomeCodePrefix: string;
   };
 }
 
@@ -516,14 +517,19 @@ export function SettingsClient({ defaults }: Props) {
             <label className={LABEL}>Mensaje</label>
             <textarea name="welcome_message" defaultValue={defaults.welcomeMessage} placeholder="Ingresá tu correo para recibir novedades y descuentos exclusivos." rows={2} className={`${INPUT} resize-none`} />
           </div>
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid sm:grid-cols-3 gap-3">
             <div>
               <label className={LABEL}>% de descuento (opcional)</label>
               <input type="number" name="welcome_discount_percent" min={1} max={99} defaultValue={defaults.welcomeDiscountPercent ?? ""} placeholder="Ej: 15" className={INPUT} />
               <p className="text-[11px] text-gray-400 mt-1">Deja vacío para no mostrar descuento</p>
             </div>
             <div>
-              <label className={LABEL}>Demora antes de mostrar (segundos)</label>
+              <label className={LABEL}>Prefijo del código</label>
+              <input name="welcome_code_prefix" maxLength={10} defaultValue={defaults.welcomeCodePrefix} placeholder="Ej: DESC" className={INPUT} />
+              <p className="text-[11px] text-gray-400 mt-1">El código será <strong>PREFIJO-XXXXXX</strong></p>
+            </div>
+            <div>
+              <label className={LABEL}>Demora antes de mostrar (seg)</label>
               <input type="number" name="welcome_delay_seconds" min={0} max={30} defaultValue={defaults.welcomeDelaySeconds} className={INPUT} />
             </div>
           </div>

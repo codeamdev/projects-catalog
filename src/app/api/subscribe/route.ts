@@ -5,11 +5,11 @@ import { subscribers, settings } from "@/db/tenant-schema";
 import { getTenantBySubdomain } from "@/lib/tenant";
 import { sendWelcomeEmail } from "@/lib/email";
 
-function generateCode(): string {
+function generateCode(prefix: string): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let code = "BIENVENIDA-";
-  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
-  return code;
+  let suffix = "";
+  for (let i = 0; i < 6; i++) suffix += chars[Math.floor(Math.random() * chars.length)];
+  return prefix ? `${prefix}-${suffix}` : suffix;
 }
 
 export async function POST(req: NextRequest) {
@@ -31,6 +31,7 @@ export async function POST(req: NextRequest) {
     db.select({
       welcomeEnabled: settings.welcomeEnabled,
       welcomeDiscountPercent: settings.welcomeDiscountPercent,
+      welcomeCodePrefix: settings.welcomeCodePrefix,
     }).from(settings).limit(1)
   );
 
@@ -38,7 +39,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Suscripción no disponible" }, { status: 400 });
   }
 
-  const discountCode = generateCode();
+  const prefix = (s.welcomeCodePrefix ?? "DESC").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10);
+  const discountCode = generateCode(prefix);
   let finalCode = discountCode;
 
   try {

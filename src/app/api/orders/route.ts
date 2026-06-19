@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
 
   // Mark subscriber discount code as used (non-blocking)
   const couponCode = parsed.data.couponCode;
-  if (couponCode && couponCode.startsWith("BIENVENIDA-")) {
+  if (couponCode && couponCode.includes("-")) {
     withTenantDb(tenant.schemaName, (db) =>
       db.update(subscribers)
         .set({ discountUsedAt: new Date() })
