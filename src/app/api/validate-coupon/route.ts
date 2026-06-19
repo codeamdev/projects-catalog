@@ -20,7 +20,6 @@ export async function POST(req: NextRequest) {
   const [s] = await withTenantDb(tenant.schemaName, (db) =>
     db.select({
       welcomeDiscountPercent: settings.welcomeDiscountPercent,
-      welcomeCode: settings.welcomeCode,
       discountCode: settings.discountCode,
       discountCodePercent: settings.discountCodePercent,
     }).from(settings).limit(1)
@@ -28,17 +27,12 @@ export async function POST(req: NextRequest) {
 
   if (!s) return NextResponse.json({ valid: false });
 
-  // Código global del popup de bienvenida
-  if (s.welcomeCode?.toUpperCase() === code && s.welcomeDiscountPercent) {
-    return NextResponse.json({ valid: true, percent: s.welcomeDiscountPercent, type: "subscriber" });
-  }
-
   // Código general del catálogo
   if (s.discountCode?.toUpperCase() === code && s.discountCodePercent) {
     return NextResponse.json({ valid: true, percent: s.discountCodePercent, type: "general" });
   }
 
-  // Código único por suscriptor (para uso futuro)
+  // Código único por suscriptor
   const [sub] = await withTenantDb(tenant.schemaName, (db) =>
     db.select({ discountUsedAt: subscribers.discountUsedAt })
       .from(subscribers)
@@ -47,7 +41,9 @@ export async function POST(req: NextRequest) {
   );
 
   if (!sub) return NextResponse.json({ valid: false });
-  if (sub.discountUsedAt) return NextResponse.json({ valid: false, error: "Este código ya fue utilizado" });
+  if (sub.discountUsedAt) {
+    return NextResponse.json({ valid: false, error: "Este código ya fue utilizado en tu primera compra" });
+  }
 
   return NextResponse.json({ valid: true, percent: s.welcomeDiscountPercent ?? 0, type: "subscriber" });
 }

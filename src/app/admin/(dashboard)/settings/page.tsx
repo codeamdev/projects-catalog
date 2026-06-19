@@ -67,7 +67,7 @@ export default async function SettingsPage() {
         welcomeDiscountPercent: s?.welcomeDiscountPercent ?? null,
         welcomeMessage: s?.welcomeMessage ?? "",
         welcomeDelaySeconds: s?.welcomeDelaySeconds ?? 3,
-        welcomeCode: s?.welcomeCode ?? "",
+        welcomeCodePrefix: s?.welcomeCodePrefix ?? "DESC",
       }}
     />
   );

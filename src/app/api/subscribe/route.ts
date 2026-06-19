@@ -5,7 +5,14 @@ import { subscribers, settings } from "@/db/tenant-schema";
 import { getTenantBySubdomain } from "@/lib/tenant";
 import { sendWelcomeEmail } from "@/lib/email";
 
-const COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 año
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+
+function generateCode(prefix: string): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let suffix = "";
+  for (let i = 0; i < 6; i++) suffix += chars[Math.floor(Math.random() * chars.length)];
+  return `${prefix}-${suffix}`;
+}
 
 export async function POST(req: NextRequest) {
   const subdomain = req.headers.get("x-tenant-subdomain");
@@ -26,7 +33,7 @@ export async function POST(req: NextRequest) {
     db.select({
       welcomeEnabled: settings.welcomeEnabled,
       welcomeDiscountPercent: settings.welcomeDiscountPercent,
-      welcomeCode: settings.welcomeCode,
+      welcomeCodePrefix: settings.welcomeCodePrefix,
     }).from(settings).limit(1)
   );
 
@@ -34,24 +41,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Suscripción no disponible" }, { status: 400 });
   }
 
-  // El código configurado por el admin (sin aleatoriedad)
-  const discountCode = s.welcomeCode?.trim().toUpperCase() || null;
+  const prefix = (s.welcomeCodePrefix ?? "DESC").toUpperCase().replace(/[^A-Z0-9]/g, "") || "DESC";
 
   try {
-    // Verificar si ya está suscrito
+    // Si ya está suscrito, devolver su código existente
     const [existing] = await withTenantDb(tenant.schemaName, (db) =>
-      db.select({ id: subscribers.id, discountCode: subscribers.discountCode })
+      db.select({
+        discountCode: subscribers.discountCode,
+        discountUsedAt: subscribers.discountUsedAt,
+      })
         .from(subscribers)
         .where(eq(subscribers.email, email.toLowerCase()))
         .limit(1)
     );
 
     if (existing) {
-      // Ya suscrito — informar sin error, el modal lo maneja
       const res = NextResponse.json({
         ok: true,
         alreadySubscribed: true,
-        discountCode: s.welcomeDiscountPercent ? (existing.discountCode ?? discountCode) : null,
+        codeUsed: !!existing.discountUsedAt,
+        discountCode: s.welcomeDiscountPercent ? existing.discountCode : null,
         percent: s.welcomeDiscountPercent ?? null,
       });
       res.cookies.set(`subscribed_${subdomain}`, "1", {
@@ -59,6 +68,9 @@ export async function POST(req: NextRequest) {
       });
       return res;
     }
+
+    // Nuevo suscriptor — generar código único
+    const discountCode = s.welcomeDiscountPercent ? generateCode(prefix) : null;
 
     await withTenantDb(tenant.schemaName, (db) =>
       db.insert(subscribers).values({
@@ -81,20 +93,20 @@ export async function POST(req: NextRequest) {
         ).catch(() => { });
       }
     }
+
+    const res = NextResponse.json({
+      ok: true,
+      alreadySubscribed: false,
+      codeUsed: false,
+      discountCode: s.welcomeDiscountPercent ? discountCode : null,
+      percent: s.welcomeDiscountPercent ?? null,
+    });
+    res.cookies.set(`subscribed_${subdomain}`, "1", {
+      maxAge: COOKIE_MAX_AGE, path: "/", sameSite: "lax", httpOnly: false,
+    });
+    return res;
+
   } catch {
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
-
-  const res = NextResponse.json({
-    ok: true,
-    alreadySubscribed: false,
-    discountCode: s.welcomeDiscountPercent ? discountCode : null,
-    percent: s.welcomeDiscountPercent ?? null,
-  });
-
-  res.cookies.set(`subscribed_${subdomain}`, "1", {
-    maxAge: COOKIE_MAX_AGE, path: "/", sameSite: "lax", httpOnly: false,
-  });
-
-  return res;
 }

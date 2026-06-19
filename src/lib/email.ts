@@ -119,6 +119,12 @@ function buildEmailHtml(
 </body></html>`;
 }
 
+function absoluteUrl(url: string, baseUrl: string): string {
+  if (!url) return url;
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  return `${baseUrl}${url.startsWith("/") ? "" : "/"}${url}`;
+}
+
 export async function sendWelcomeEmail(
   tenant: TenantEmailInfo,
   subscriber: EmailSubscriber,
@@ -126,6 +132,7 @@ export async function sendWelcomeEmail(
 ): Promise<void> {
   if (!process.env.RESEND_API_KEY) return;
   const resend = getResend();
+  const catalogUrl = `https://${tenant.subdomain}.${ROOT_DOMAIN}`;
   const campaign: CampaignData = {
     type: "welcome",
     subject: `¡Bienvenida/o a ${tenant.name}! 🎉`,
@@ -134,11 +141,12 @@ export async function sendWelcomeEmail(
     discountCode: subscriber.discountCode ?? undefined,
     discountPercent: welcomePercent,
   };
+  const logoUrlAbs = tenant.logoUrl ? absoluteUrl(tenant.logoUrl, catalogUrl) : null;
   await resend.emails.send({
     from: `${tenant.name} <${FROM_EMAIL}>`,
     to: subscriber.email,
     subject: campaign.subject,
-    html: buildEmailHtml(tenant, campaign, subscriber),
+    html: buildEmailHtml({ ...tenant, logoUrl: logoUrlAbs }, campaign, subscriber),
   });
 }
 
@@ -152,21 +160,32 @@ export async function sendCampaignEmails(
   }
 
   const resend = getResend();
-  const active = subscribers; // Already filtered to active on the caller side
+  const catalogUrl = `https://${tenant.subdomain}.${ROOT_DOMAIN}`;
+
+  // Convertir URLs relativas a absolutas en productos e imagen del logo
+  const logoUrlAbs = tenant.logoUrl ? absoluteUrl(tenant.logoUrl, catalogUrl) : null;
+  const campaignAbs: CampaignData = {
+    ...campaign,
+    products: campaign.products?.map((p) => ({
+      ...p,
+      imageUrl: p.imageUrl ? absoluteUrl(p.imageUrl, catalogUrl) : null,
+    })),
+  };
+  const tenantAbs = { ...tenant, logoUrl: logoUrlAbs };
+
   let sent = 0;
   let failed = 0;
 
-  // Resend batch: max 100 per call
   const BATCH = 50;
-  for (let i = 0; i < active.length; i += BATCH) {
-    const chunk = active.slice(i, i + BATCH);
+  for (let i = 0; i < subscribers.length; i += BATCH) {
+    const chunk = subscribers.slice(i, i + BATCH);
     try {
       await resend.batch.send(
         chunk.map((sub) => ({
           from: `${tenant.name} <${FROM_EMAIL}>`,
           to: sub.email,
           subject: campaign.subject,
-          html: buildEmailHtml(tenant, campaign, sub),
+          html: buildEmailHtml(tenantAbs, campaignAbs, sub),
         }))
       );
       sent += chunk.length;
