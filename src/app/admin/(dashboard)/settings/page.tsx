@@ -68,6 +68,7 @@ export default async function SettingsPage() {
         welcomeMessage: s?.welcomeMessage ?? "",
         welcomeDelaySeconds: s?.welcomeDelaySeconds ?? 3,
         welcomeCodePrefix: s?.welcomeCodePrefix ?? "DESC",
+        welcomeCodeSuffix: s?.welcomeCodeSuffix ?? "",
       }}
     />
   );

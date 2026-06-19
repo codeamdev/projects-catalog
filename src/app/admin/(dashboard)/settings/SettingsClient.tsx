@@ -68,6 +68,7 @@ interface Props {
     welcomeMessage: string;
     welcomeDelaySeconds: number;
     welcomeCodePrefix: string;
+    welcomeCodeSuffix: string;
   };
 }
 
@@ -517,7 +518,7 @@ export function SettingsClient({ defaults }: Props) {
             <label className={LABEL}>Mensaje</label>
             <textarea name="welcome_message" defaultValue={defaults.welcomeMessage} placeholder="Ingresá tu correo para recibir novedades y descuentos exclusivos." rows={2} className={`${INPUT} resize-none`} />
           </div>
-          <div className="grid sm:grid-cols-3 gap-3">
+          <div className="grid sm:grid-cols-2 gap-3">
             <div>
               <label className={LABEL}>% de descuento (opcional)</label>
               <input type="number" name="welcome_discount_percent" min={1} max={99} defaultValue={defaults.welcomeDiscountPercent ?? ""} placeholder="Ej: 15" className={INPUT} />
@@ -526,7 +527,11 @@ export function SettingsClient({ defaults }: Props) {
             <div>
               <label className={LABEL}>Prefijo del código</label>
               <input name="welcome_code_prefix" maxLength={10} defaultValue={defaults.welcomeCodePrefix} placeholder="Ej: DESC" className={INPUT} />
-              <p className="text-[11px] text-gray-400 mt-1">El código será <strong>PREFIJO-XXXXXX</strong></p>
+            </div>
+            <div>
+              <label className={LABEL}>Sufijo fijo (opcional)</label>
+              <input name="welcome_code_suffix" maxLength={10} defaultValue={defaults.welcomeCodeSuffix} placeholder="Ej: 2026" className={INPUT} />
+              <p className="text-[11px] text-gray-400 mt-1">Vacío = aleatorio único por suscriptor</p>
             </div>
             <div>
               <label className={LABEL}>Demora antes de mostrar (seg)</label>

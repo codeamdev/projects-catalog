@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
       welcomeEnabled: settings.welcomeEnabled,
       welcomeDiscountPercent: settings.welcomeDiscountPercent,
       welcomeCodePrefix: settings.welcomeCodePrefix,
+      welcomeCodeSuffix: settings.welcomeCodeSuffix,
     }).from(settings).limit(1)
   );
 
@@ -42,7 +43,10 @@ export async function POST(req: NextRequest) {
   }
 
   const prefix = (s.welcomeCodePrefix ?? "DESC").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10);
-  const discountCode = generateCode(prefix);
+  const rawSuffix = (s.welcomeCodeSuffix ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10);
+  const discountCode = rawSuffix
+    ? (prefix ? `${prefix}-${rawSuffix}` : rawSuffix)
+    : generateCode(prefix);
   let finalCode = discountCode;
 
   try {
