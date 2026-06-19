@@ -84,7 +84,7 @@ export function SettingsClient({ defaults }: Props) {
 
   // Why Choose Us
   const [whyEnabled, setWhyEnabled] = useState(defaults.whyChooseEnabled);
-  const [whyIconStyle, setWhyIconStyle] = useState(defaults.whyChooseIconStyle ?? "plain");
+  const whyIconStyle = "plain";
   const [whyItems, setWhyItems] = useState<WhyItem[]>(defaults.whyChooseItems);
   const [newWhy, setNewWhy] = useState<WhyItem | null>(null);
   const DEFAULT_EMOJI = WHY_EMOJIS[0].emoji;
@@ -123,12 +123,6 @@ export function SettingsClient({ defaults }: Props) {
       else toast.error(result.error);
     });
   }
-
-  const ICON_TYPES = [
-    { id: "plain",        label: "Sin fondo",      desc: "Emoji grande, limpio" },
-    { id: "circle-soft",  label: "Círculo suave",  desc: "Fondo claro de marca" },
-    { id: "circle-color", label: "Círculo color",  desc: "Círculo sólido de marca" },
-  ] as const;
 
   return (
     <form onSubmit={handleSaveAll}>
@@ -409,32 +403,6 @@ export function SettingsClient({ defaults }: Props) {
             )}
           </div>
 
-          {/* Tipo de ícono */}
-          <div>
-            <label className={LABEL}>Estilo de fondo</label>
-            <div className="grid grid-cols-3 gap-2">
-              {ICON_TYPES.map(({ id, label, desc }) => (
-                <button key={id} type="button" onClick={() => setWhyIconStyle(id)}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 text-center transition-all ${whyIconStyle === id ? "border-indigo-500 bg-indigo-50" : "border-gray-200 hover:border-gray-300 bg-white"}`}>
-                  {id === "plain" && <span className="text-3xl leading-none">🚚</span>}
-                  {id === "circle-soft" && (
-                    <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#e0e7ff" }}>
-                      <span className="text-2xl leading-none">🚚</span>
-                    </div>
-                  )}
-                  {id === "circle-color" && (
-                    <div className="w-11 h-11 rounded-xl bg-indigo-600 flex items-center justify-center">
-                      <span className="text-2xl leading-none">🚚</span>
-                    </div>
-                  )}
-                  <div>
-                    <p className={`text-xs font-semibold leading-tight ${whyIconStyle === id ? "text-indigo-700" : "text-gray-700"}`}>{label}</p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">{desc}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
         </section>
 
         {/* ── Preguntas frecuentes ── */}
