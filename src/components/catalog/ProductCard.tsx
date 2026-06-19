@@ -17,6 +17,7 @@ export function ProductCard({ product, whatsapp, variant = "regular" }: Props) {
   const { addItem, items } = useCart();
   const router = useRouter();
   const [added, setAdded] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
   const isInCart = items.some((i) => i.id === product.id);
 
   const mainImage = product.images[0];
@@ -59,14 +60,20 @@ export function ProductCard({ product, whatsapp, variant = "regular" }: Props) {
         className="relative rounded-2xl overflow-hidden bg-gray-900 group cursor-pointer aspect-[4/3]"
       >
         {mainImage && (
-          <Image
-            src={mainImage.url}
-            alt={mainImage.alt || product.title}
-            fill
-            sizes="(max-width: 640px) 100vw, 50vw"
-            className="object-cover transition-transform duration-700 group-hover:scale-105"
-            priority
-          />
+          <>
+            {!imgLoaded && (
+              <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+            )}
+            <Image
+              src={mainImage.url}
+              alt={mainImage.alt || product.title}
+              fill
+              sizes="(max-width: 640px) 100vw, 50vw"
+              className={`object-cover transition-all duration-500 group-hover:scale-105 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
+              priority
+              onLoad={() => setImgLoaded(true)}
+            />
+          </>
         )}
 
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
@@ -129,13 +136,20 @@ export function ProductCard({ product, whatsapp, variant = "regular" }: Props) {
       {/* Imagen */}
       <div className="aspect-square relative overflow-hidden bg-gray-50">
         {mainImage ? (
-          <Image
-            src={mainImage.url}
-            alt={mainImage.alt || product.title}
-            fill
-            sizes="(max-width: 640px) 50vw, 25vw"
-            className="object-contain p-3 sm:p-4 transition-transform duration-500 group-hover:scale-105"
-          />
+          <>
+            {!imgLoaded && (
+              <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 animate-pulse" />
+            )}
+            <Image
+              src={mainImage.url}
+              alt={mainImage.alt || product.title}
+              fill
+              sizes="(max-width: 640px) 50vw, 25vw"
+              className={`object-contain p-3 sm:p-4 transition-all duration-500 group-hover:scale-105 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
+              loading="lazy"
+              onLoad={() => setImgLoaded(true)}
+            />
+          </>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-5xl text-gray-300">
             📦
