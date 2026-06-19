@@ -204,9 +204,6 @@ export function EmailComposer({
         >
           {sending ? "Enviando…" : `Enviar a ${subscriberCount} suscriptor${subscriberCount !== 1 ? "es" : ""}`}
         </button>
-        {!process.env.NEXT_PUBLIC_HAS_EMAIL_KEY && (
-          <p className="text-xs text-amber-600 text-center">⚠️ RESEND_API_KEY no configurada — los emails no se enviarán</p>
-        )}
       </section>
     </div>
   );
