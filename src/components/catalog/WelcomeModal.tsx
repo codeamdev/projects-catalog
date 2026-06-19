@@ -187,17 +187,20 @@ export function WelcomeModal({
         ) : (
           /* already subscribed */
           <div className="px-7 py-10 text-center">
-            <div className="text-6xl mb-4">✉️</div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">¡Ya estás suscrito!</h2>
+            <div className="text-6xl mb-4">🎁</div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">¡Ya tenés tu descuento!</h2>
             <p className="text-gray-500 text-sm mb-6">
-              Este correo ya está registrado en nuestra lista.
+              Este correo ya está suscrito. Tu descuento de primera compra sigue siendo válido:
             </p>
             {code && (
               <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl py-5 px-6 mb-6">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Tu código de descuento</p>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Tu código</p>
                 <p className="text-3xl font-black text-gray-900 tracking-widest font-mono">{code}</p>
-                {percent && <p className="text-sm text-gray-500 mt-1">{percent}% de descuento</p>}
+                {percent && <p className="text-sm text-gray-500 mt-1">{percent}% de descuento en tu primera compra</p>}
               </div>
+            )}
+            {!code && (
+              <p className="text-gray-400 text-sm mb-6">Revisá el email que te enviamos cuando te suscribiste.</p>
             )}
             <button
               onClick={dismiss}
