@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import type { Metadata } from "next";
 import { getCurrentTenant } from "@/lib/tenant";
 import { getProducts, getCategories, getFilterGroups, getProductFilterMap } from "@/lib/products";
@@ -280,7 +281,7 @@ export default async function Home({
         );
       })()}
 
-      {s?.welcomeEnabled && (
+      {s?.welcomeEnabled && !(await cookies()).get(`subscribed_${tenant.subdomain}`) && (
         <WelcomeModal
           tenantSubdomain={tenant.subdomain}
           tenantName={tenant.name}

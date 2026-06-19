@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { eq, isNull } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { withTenantDb } from "@/db";
 import { subscribers, settings } from "@/db/tenant-schema";
 import { getTenantBySubdomain } from "@/lib/tenant";
 import { sendWelcomeEmail } from "@/lib/email";
+
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 año
 
 function generateCode(prefix: string): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -44,16 +46,14 @@ export async function POST(req: NextRequest) {
   let finalCode = discountCode;
 
   try {
-    // Check if already subscribed
     const [existing] = await withTenantDb(tenant.schemaName, (db) =>
-      db.select({ discountCode: subscribers.discountCode, discountUsedAt: subscribers.discountUsedAt })
+      db.select({ discountCode: subscribers.discountCode })
         .from(subscribers)
         .where(eq(subscribers.email, email))
         .limit(1)
     );
 
     if (existing) {
-      // Already subscribed — return existing code (if not used)
       finalCode = existing.discountCode ?? discountCode;
     } else {
       await withTenantDb(tenant.schemaName, (db) =>
@@ -64,7 +64,6 @@ export async function POST(req: NextRequest) {
         })
       );
 
-      // Send welcome email async (don't await to keep response fast)
       if (s.welcomeDiscountPercent) {
         const [newSub] = await withTenantDb(tenant.schemaName, (db) =>
           db.select({ unsubscribeToken: subscribers.unsubscribeToken })
@@ -75,7 +74,7 @@ export async function POST(req: NextRequest) {
             { name: tenant.name, subdomain: tenant.subdomain, logoUrl: tenant.logoUrl ?? null, primaryColor: tenant.primaryColor ?? "#111827" },
             { email, name: name?.trim() || null, discountCode, unsubscribeToken: newSub.unsubscribeToken },
             s.welcomeDiscountPercent
-          ).catch(() => { /* non-critical */ });
+          ).catch(() => { });
         }
       }
     }
@@ -83,9 +82,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 
-  return NextResponse.json({
+  const res = NextResponse.json({
     ok: true,
     discountCode: s.welcomeDiscountPercent ? finalCode : null,
     percent: s.welcomeDiscountPercent ?? null,
   });
+
+  // Cookie de larga duración para no volver a mostrar el popup en este navegador
+  res.cookies.set(`subscribed_${subdomain}`, "1", {
+    maxAge: COOKIE_MAX_AGE,
+    path: "/",
+    sameSite: "lax",
+    httpOnly: false,
+  });
+
+  return res;
 }

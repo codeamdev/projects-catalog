@@ -34,14 +34,11 @@ export function WelcomeModal({
   const [percent, setPercent] = useState(discountPercent);
 
   useEffect(() => {
-    const key = `welcome_seen_${tenantSubdomain}`;
-    if (localStorage.getItem(key)) return;
     const t = setTimeout(() => setShow(true), (delaySeconds || 3) * 1000);
     return () => clearTimeout(t);
-  }, [tenantSubdomain, delaySeconds]);
+  }, [delaySeconds]);
 
   function dismiss() {
-    localStorage.setItem(`welcome_seen_${tenantSubdomain}`, "1");
     setShow(false);
   }
 
@@ -67,7 +64,6 @@ export function WelcomeModal({
       setCode(data.discountCode ?? "");
       setPercent(data.percent);
       setStep("success");
-      localStorage.setItem(`welcome_seen_${tenantSubdomain}`, "1");
     } catch {
       setError("Error de conexión. Intentá de nuevo.");
     } finally {
