@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { Search, Download, Upload } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { withTenantDb } from "@/db";
 import { products, categories, productImages } from "@/db/tenant-schema";
@@ -62,12 +62,30 @@ export default async function AdminProductsPage({
             {total} {q ? `resultado${total !== 1 ? "s" : ""} para "${q}"` : "en total"}
           </p>
         </div>
-        <Link
-          href="/admin/products/new"
-          className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors"
-        >
-          + Nuevo producto
-        </Link>
+        <div className="flex items-center gap-2">
+          <a
+            href="/api/admin/products/export"
+            className="flex items-center gap-1.5 border border-gray-200 text-gray-600 px-3 py-2 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors"
+            title="Exportar a Excel"
+          >
+            <Download className="w-4 h-4" />
+            <span className="hidden sm:inline">Excel</span>
+          </a>
+          <Link
+            href="/admin/products/import"
+            className="flex items-center gap-1.5 border border-gray-200 text-gray-600 px-3 py-2 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors"
+            title="Importar desde Excel"
+          >
+            <Upload className="w-4 h-4" />
+            <span className="hidden sm:inline">Importar</span>
+          </Link>
+          <Link
+            href="/admin/products/new"
+            className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors"
+          >
+            + Nuevo
+          </Link>
+        </div>
       </div>
 
       {/* Buscador */}
