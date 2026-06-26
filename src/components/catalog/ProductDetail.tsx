@@ -50,6 +50,7 @@ export function ProductDetail({ product }: Props) {
   const formattedPrice = finalPrice ? $(finalPrice) : null;
   const formattedOriginal = discount > 0 && price ? $(price) : null;
   const savings = discount > 0 && price && finalPrice ? $(price - finalPrice) : null;
+  const outOfStock = product.soldOut || (product.trackStock && product.stock !== null && product.stock <= 0);
 
   function handleAddToCart() {
     for (let i = 0; i < quantity; i++) {
@@ -180,9 +181,17 @@ export function ProductDetail({ product }: Props) {
               </span>
             )}
 
-            <h1 className="text-3xl sm:text-5xl font-bold text-gray-900 leading-tight mb-5">
+            <h1 className="text-3xl sm:text-5xl font-bold text-gray-900 leading-tight mb-4">
               {product.title}
             </h1>
+
+            {outOfStock && (
+              <div className="inline-flex items-center gap-2 bg-gray-100 border border-gray-200 rounded-xl px-4 py-2.5 mb-5">
+                <span className="w-2 h-2 rounded-full bg-gray-400 flex-shrink-0" />
+                <span className="text-sm font-semibold text-gray-600">Producto agotado</span>
+                <span className="text-xs text-gray-400">— No disponible por el momento</span>
+              </div>
+            )}
 
             {/* Precio con descuento */}
             {formattedPrice && (
@@ -219,41 +228,49 @@ export function ProductDetail({ product }: Props) {
             )}
 
             {/* Selector de cantidad */}
-            <div className="flex items-center gap-4 mb-7">
-              <span className="text-base font-medium text-gray-700">Cantidad</span>
-              <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden">
-                <button
-                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                  className="w-12 h-12 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors text-2xl leading-none"
-                >
-                  −
-                </button>
-                <span className="w-12 text-center text-base font-bold">{quantity}</span>
-                <button
-                  onClick={() => setQuantity((q) => q + 1)}
-                  className="w-12 h-12 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors text-2xl leading-none"
-                >
-                  +
-                </button>
+            {!outOfStock && (
+              <div className="flex items-center gap-4 mb-7">
+                <span className="text-base font-medium text-gray-700">Cantidad</span>
+                <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden">
+                  <button
+                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                    className="w-12 h-12 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors text-2xl leading-none"
+                  >
+                    −
+                  </button>
+                  <span className="w-12 text-center text-base font-bold">{quantity}</span>
+                  <button
+                    onClick={() => setQuantity((q) => q + 1)}
+                    className="w-12 h-12 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors text-2xl leading-none"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row gap-3 mt-auto">
-              <button
-                onClick={handleAddToCart}
-                className={`flex-1 flex items-center justify-center gap-2.5 py-5 px-8 rounded-2xl font-bold text-base transition-all duration-200 ${
-                  added
-                    ? "bg-green-500 text-white"
-                    : "bg-gray-900 hover:bg-gray-700 text-white"
-                }`}
-              >
-                {added ? (
-                  <><Check className="w-5 h-5" /> Agregado al carrito</>
-                ) : (
-                  <><ShoppingCart className="w-5 h-5" /> Agregar al carrito</>
-                )}
-              </button>
+              {outOfStock ? (
+                <div className="flex-1 flex items-center justify-center gap-2.5 py-5 px-8 rounded-2xl font-bold text-base bg-gray-100 text-gray-400 cursor-not-allowed select-none">
+                  Sin disponibilidad
+                </div>
+              ) : (
+                <button
+                  onClick={handleAddToCart}
+                  className={`flex-1 flex items-center justify-center gap-2.5 py-5 px-8 rounded-2xl font-bold text-base transition-all duration-200 ${
+                    added
+                      ? "bg-green-500 text-white"
+                      : "bg-gray-900 hover:bg-gray-700 text-white"
+                  }`}
+                >
+                  {added ? (
+                    <><Check className="w-5 h-5" /> Agregado al carrito</>
+                  ) : (
+                    <><ShoppingCart className="w-5 h-5" /> Agregar al carrito</>
+                  )}
+                </button>
+              )}
             </div>
           </div>
         </div>

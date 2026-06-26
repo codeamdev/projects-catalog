@@ -158,8 +158,8 @@ export function ProductCard({ product, whatsapp, variant = "regular" }: Props) {
 
         {/* Badge agotado */}
         {outOfStock && (
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2">
-            <span className="bg-gray-900/80 backdrop-blur-sm text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest whitespace-nowrap">
+          <div className="absolute inset-x-0 bottom-0 flex justify-center pb-2.5">
+            <span className="bg-black/75 backdrop-blur-sm text-white text-[11px] font-bold px-4 py-1.5 rounded-full uppercase tracking-widest shadow-sm">
               Agotado
             </span>
           </div>
