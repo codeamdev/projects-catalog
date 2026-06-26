@@ -145,20 +145,29 @@ export function ProductCard({ product, whatsapp, variant = "regular" }: Props) {
               alt={mainImage.alt || product.title}
               fill
               sizes="(max-width: 640px) 50vw, 25vw"
-              className={`object-contain p-3 sm:p-4 transition-all duration-500 group-hover:scale-105 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
+              className={`object-contain p-3 sm:p-4 transition-all duration-500 group-hover:scale-105 ${imgLoaded ? "opacity-100" : "opacity-0"} ${outOfStock ? "grayscale opacity-60" : ""}`}
               loading="lazy"
               onLoad={() => setImgLoaded(true)}
             />
           </>
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-5xl text-gray-300">
+          <div className={`absolute inset-0 flex items-center justify-center text-5xl text-gray-300 ${outOfStock ? "grayscale opacity-60" : ""}`}>
             📦
+          </div>
+        )}
+
+        {/* Overlay + badge agotado */}
+        {outOfStock && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="bg-white/90 backdrop-blur-[2px] rounded-2xl px-4 py-2 shadow-sm border border-gray-200/80 flex flex-col items-center gap-0.5">
+              <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Agotado</span>
+            </div>
           </div>
         )}
 
         {/* Badges superiores */}
         <div className="absolute top-2.5 left-2.5 flex flex-col gap-1">
-          {product.featured && (
+          {product.featured && !outOfStock && (
             <span className="bg-amber-400 text-amber-900 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">
               ✦ Destacado
             </span>
@@ -168,14 +177,9 @@ export function ProductCard({ product, whatsapp, variant = "regular" }: Props) {
               {product.category.name}
             </span>
           )}
-          {isInCart && (
+          {isInCart && !outOfStock && (
             <span className="bg-green-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5">
               <Check className="w-2.5 h-2.5" /> En carrito
-            </span>
-          )}
-          {outOfStock && (
-            <span className="bg-gray-700 text-white text-[9px] font-bold px-2 py-0.5 rounded-full">
-              Sin stock
             </span>
           )}
           {lowStock && (
@@ -212,8 +216,10 @@ export function ProductCard({ product, whatsapp, variant = "regular" }: Props) {
           <button
             onClick={handleAddToCart}
             disabled={outOfStock}
-            className={`flex-shrink-0 flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 rounded-full transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${
-              added
+            className={`flex-shrink-0 flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 rounded-full transition-all active:scale-95 ${
+              outOfStock
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : added
                 ? "bg-green-500 text-white"
                 : "bg-[var(--primary)] text-white hover:opacity-90"
             }`}

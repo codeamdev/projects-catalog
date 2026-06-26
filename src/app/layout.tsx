@@ -14,6 +14,9 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Catálogo",
+  verification: {
+    google: "M9jXa_vDp1fngE20LVSXhIB6wnINA_f5Gcou1sx0VNM",
+  },
 };
 
 export default function RootLayout({

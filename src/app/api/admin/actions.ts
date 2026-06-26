@@ -72,6 +72,8 @@ export async function toggleProductActive(
       db.update(products).set({ active }).where(eq(products.id, productId))
     );
     revalidatePath("/admin/products");
+    revalidatePath("/");
+    revalidateTag(CATALOG_TAG, {});
     return { ok: true, data: undefined };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Error desconocido" };
