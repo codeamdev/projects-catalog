@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { withTenantDb } from "@/db";
-import { products, categories, productImages, filterGroups, filterOptions, productFilters } from "@/db/tenant-schema";
+import { products, categories, productImages, filterGroups, filterOptions, productFilters, settings } from "@/db/tenant-schema";
 import { ProductForm } from "@/components/admin/ProductForm";
 import { updateProduct, deleteProduct } from "@/app/api/admin/actions";
 
@@ -15,7 +15,7 @@ export default async function EditProductPage({
   const session = await auth();
   const schema = session!.user.schemaName;
 
-  const [product, images, cats, groups, opts, assigned] = await withTenantDb(schema, async (db) => {
+  const [product, images, cats, groups, opts, assigned, [s]] = await withTenantDb(schema, async (db) => {
     return Promise.all([
       db.select().from(products).where(eq(products.id, id)).limit(1).then((r) => r[0] ?? null),
       db.select().from(productImages).where(eq(productImages.productId, id)).orderBy(productImages.order),
@@ -23,6 +23,7 @@ export default async function EditProductPage({
       db.select().from(filterGroups).orderBy(filterGroups.order, filterGroups.name),
       db.select().from(filterOptions).orderBy(filterOptions.order, filterOptions.name),
       db.select({ optionId: productFilters.optionId }).from(productFilters).where(eq(productFilters.productId, id)),
+      db.select({ inventoryEnabled: settings.inventoryEnabled }).from(settings).limit(1),
     ]);
   });
 
@@ -55,6 +56,7 @@ export default async function EditProductPage({
           trackStock: product.trackStock,
           stock: product.stock,
         }}
+        inventoryEnabled={s?.inventoryEnabled ?? false}
       />
     </div>
   );

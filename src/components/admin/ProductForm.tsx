@@ -31,11 +31,12 @@ interface Props {
   action: (formData: FormData) => Promise<ActionResult>;
   deleteAction?: () => Promise<ActionResult>;
   defaultValues?: DefaultValues;
+  inventoryEnabled?: boolean;
 }
 
 const INPUT = "w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300";
 
-export function ProductForm({ categories, filterGroups = [], selectedFilterOptionIds = [], action, deleteAction, defaultValues }: Props) {
+export function ProductForm({ categories, filterGroups = [], selectedFilterOptionIds = [], action, deleteAction, defaultValues, inventoryEnabled = false }: Props) {
   const [isPending, startTransition] = useTransition();
   const [trackStock, setTrackStock] = useState(defaultValues?.trackStock ?? false);
   const router = useRouter();
@@ -203,22 +204,24 @@ export function ProductForm({ categories, filterGroups = [], selectedFilterOptio
           />
           <span>Destacado</span>
         </label>
-        <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
-          <input type="hidden" name="track_stock" value="false" />
-          <input
-            type="checkbox"
-            name="track_stock"
-            value="true"
-            checked={trackStock}
-            onChange={(e) => setTrackStock(e.target.checked)}
-            className="w-4 h-4 rounded accent-gray-900"
-          />
-          <span>Mostrar existencias</span>
-        </label>
+        {inventoryEnabled && (
+          <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+            <input type="hidden" name="track_stock" value="false" />
+            <input
+              type="checkbox"
+              name="track_stock"
+              value="true"
+              checked={trackStock}
+              onChange={(e) => setTrackStock(e.target.checked)}
+              className="w-4 h-4 rounded accent-gray-900"
+            />
+            <span>Mostrar existencias</span>
+          </label>
+        )}
       </div>
 
-      {/* Stock — solo visible si "Mostrar existencias" está activo */}
-      {trackStock && (
+      {/* Stock — solo si inventoryEnabled y trackStock activo */}
+      {inventoryEnabled && trackStock && (
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Existencias disponibles

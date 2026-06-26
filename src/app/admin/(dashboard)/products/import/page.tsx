@@ -198,9 +198,9 @@ export default function ImportProductsPage() {
         <p>• Exportá primero para obtener la plantilla con el formato correcto.</p>
         <p>• Para <strong>actualizar</strong> productos existentes, conservá la columna <strong>ID</strong>.</p>
         <p>• Para <strong>crear</strong> nuevos productos, dejá la columna ID en blanco.</p>
-        <p>• Las imágenes deben ser URLs completas (https://...). No se suben archivos por esta vía.</p>
-        <p>• La importación reemplaza las imágenes de los productos actualizados.</p>
-        <p>• Las categorías nuevas se crean automáticamente.</p>
+        <p>• El campo <strong>Título</strong> es obligatorio. Los demás son opcionales.</p>
+        <p>• La <strong>Categoría</strong> debe existir en el sistema. Si no existe, la fila se marca como error.</p>
+        <p>• Las imágenes se gestionan individualmente desde la edición de cada producto.</p>
       </div>
     </div>
   );

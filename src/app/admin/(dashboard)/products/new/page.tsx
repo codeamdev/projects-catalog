@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { withTenantDb } from "@/db";
-import { categories, filterGroups, filterOptions } from "@/db/tenant-schema";
+import { categories, filterGroups, filterOptions, settings } from "@/db/tenant-schema";
 import { ProductForm } from "@/components/admin/ProductForm";
 import { createProduct } from "@/app/api/admin/actions";
 
@@ -8,11 +8,12 @@ export default async function NewProductPage() {
   const session = await auth();
   const schema = session!.user.schemaName;
 
-  const [cats, groups, opts] = await withTenantDb(schema, async (db) =>
+  const [cats, groups, opts, [s]] = await withTenantDb(schema, async (db) =>
     Promise.all([
       db.select({ id: categories.id, name: categories.name }).from(categories).orderBy(categories.name),
       db.select().from(filterGroups).orderBy(filterGroups.order, filterGroups.name),
       db.select().from(filterOptions).orderBy(filterOptions.order, filterOptions.name),
+      db.select({ inventoryEnabled: settings.inventoryEnabled }).from(settings).limit(1),
     ])
   );
 
@@ -29,6 +30,7 @@ export default async function NewProductPage() {
         filterGroups={filterGroupsWithOptions}
         selectedFilterOptionIds={[]}
         action={createProduct}
+        inventoryEnabled={s?.inventoryEnabled ?? false}
       />
     </div>
   );
