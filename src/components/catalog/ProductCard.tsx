@@ -31,8 +31,8 @@ export function ProductCard({ product, whatsapp, variant = "regular" }: Props) {
   const formattedPrice = finalPrice ? fmt(finalPrice) : null;
   const formattedOriginal = discount > 0 && price ? fmt(price) : null;
 
-  const outOfStock = product.trackStock && product.stock !== null && product.stock <= 0;
-  const lowStock = product.trackStock && product.stock !== null && product.stock > 0 && product.stock <= 5;
+  const outOfStock = product.soldOut || (product.trackStock && product.stock !== null && product.stock <= 0);
+  const lowStock = !product.soldOut && product.trackStock && product.stock !== null && product.stock > 0 && product.stock <= 5;
 
   function handleAddToCart(e: React.MouseEvent) {
     e.preventDefault();

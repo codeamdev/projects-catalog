@@ -5,6 +5,7 @@ import { withTenantDb } from "@/db";
 import { products, categories, productImages } from "@/db/tenant-schema";
 import { desc, eq, count, sql, ilike, and } from "drizzle-orm";
 import { ToggleActiveButton } from "@/components/admin/ToggleActiveButton";
+import { ToggleSoldOutButton } from "@/components/admin/ToggleSoldOutButton";
 import Image from "next/image";
 
 const PAGE_SIZE = 20;
@@ -30,6 +31,7 @@ export default async function AdminProductsPage({
         price: products.price,
         currency: products.currency,
         active: products.active,
+        soldOut: products.soldOut,
         categoryName: categories.name,
         imageUrl: sql<string | null>`(
           SELECT url FROM product_images
@@ -123,6 +125,7 @@ export default async function AdminProductsPage({
                 <th className="text-left px-4 py-3 hidden sm:table-cell">Categoría</th>
                 <th className="text-left px-4 py-3 hidden sm:table-cell">Precio</th>
                 <th className="text-center px-4 py-3">Activo</th>
+                <th className="text-center px-4 py-3 hidden sm:table-cell">Agotado</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
@@ -155,6 +158,9 @@ export default async function AdminProductsPage({
                   </td>
                   <td className="px-4 py-3 text-center">
                     <ToggleActiveButton productId={p.id} active={p.active} />
+                  </td>
+                  <td className="px-4 py-3 text-center hidden sm:table-cell">
+                    <ToggleSoldOutButton productId={p.id} soldOut={p.soldOut} />
                   </td>
                   <td className="px-4 py-3">
                     <Link href={`/admin/products/${p.id}`} className="text-blue-600 hover:underline text-xs">

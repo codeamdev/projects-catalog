@@ -62,6 +62,24 @@ function toSlug(title: string) {
 
 // â”€â”€ Productos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
+export async function toggleProductSoldOut(
+  productId: string,
+  soldOut: boolean
+): Promise<ActionResult> {
+  try {
+    const session = await requireRole("EDITOR");
+    await withTenantDb(session.user.schemaName, (db) =>
+      db.update(products).set({ soldOut }).where(eq(products.id, productId))
+    );
+    revalidatePath("/admin/products");
+    revalidatePath("/");
+    revalidateTag(CATALOG_TAG, {});
+    return { ok: true, data: undefined };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Error desconocido" };
+  }
+}
+
 export async function toggleProductActive(
   productId: string,
   active: boolean
@@ -93,6 +111,7 @@ const ProductInput = z.object({
   imageUrls: z.string().optional(),
   trackStock: z.boolean().default(false),
   stock: z.number().int().min(0).nullable(),
+  soldOut: z.boolean().default(false),
 });
 
 export async function createProduct(formData: FormData): Promise<ActionResult> {
@@ -116,6 +135,7 @@ export async function createProduct(formData: FormData): Promise<ActionResult> {
       imageUrls: formData.get("imageUrls") || undefined,
       trackStock: formData.getAll("track_stock").includes("true"),
       stock: rawStock !== null && rawStock !== "" ? parseInt(rawStock, 10) : null,
+      soldOut: formData.getAll("sold_out").includes("true"),
     });
 
     const slug = toSlug(parsed.title);
@@ -140,6 +160,7 @@ export async function createProduct(formData: FormData): Promise<ActionResult> {
           tags: tagArray,
           trackStock: parsed.trackStock,
           stock: parsed.stock,
+          soldOut: parsed.soldOut,
         })
         .returning({ id: products.id });
 
@@ -189,6 +210,7 @@ export async function updateProduct(productId: string, formData: FormData): Prom
       imageUrls: formData.get("imageUrls") || undefined,
       trackStock: formData.getAll("track_stock").includes("true"),
       stock: rawStock2 !== null && rawStock2 !== "" ? parseInt(rawStock2, 10) : null,
+      soldOut: formData.getAll("sold_out").includes("true"),
     });
 
     const tagArray = parsed.tags?.split(",").map((t) => t.trim()).filter(Boolean) ?? [];
@@ -210,6 +232,7 @@ export async function updateProduct(productId: string, formData: FormData): Prom
           tags: tagArray,
           trackStock: parsed.trackStock,
           stock: parsed.stock,
+          soldOut: parsed.soldOut,
           updatedAt: new Date(),
         })
         .where(eq(products.id, productId));

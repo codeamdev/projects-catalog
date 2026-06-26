@@ -55,6 +55,7 @@ export default async function EditProductPage({
           imageUrls: images.map((i) => i.url).join("\n"),
           trackStock: product.trackStock,
           stock: product.stock,
+          soldOut: product.soldOut,
         }}
         inventoryEnabled={s?.inventoryEnabled ?? false}
       />

@@ -41,6 +41,7 @@ export const products = pgTable(
     tags: text("tags").array().default([]).notNull(),
     stock: integer("stock"),
     trackStock: boolean("track_stock").default(false).notNull(),
+    soldOut: boolean("sold_out").default(false).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },

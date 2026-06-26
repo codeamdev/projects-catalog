@@ -22,6 +22,7 @@ interface DefaultValues {
   imageUrls?: string;
   trackStock?: boolean;
   stock?: number | null;
+  soldOut?: boolean;
 }
 
 interface Props {
@@ -203,6 +204,17 @@ export function ProductForm({ categories, filterGroups = [], selectedFilterOptio
             className="w-4 h-4 rounded accent-gray-900"
           />
           <span>Destacado</span>
+        </label>
+        <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+          <input type="hidden" name="sold_out" value="false" />
+          <input
+            type="checkbox"
+            name="sold_out"
+            value="true"
+            defaultChecked={defaultValues?.soldOut === true}
+            className="w-4 h-4 rounded accent-orange-400"
+          />
+          <span className="text-orange-600 font-medium">Agotado</span>
         </label>
         {inventoryEnabled && (
           <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
