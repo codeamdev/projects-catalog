@@ -145,23 +145,23 @@ export function ProductCard({ product, whatsapp, variant = "regular" }: Props) {
               alt={mainImage.alt || product.title}
               fill
               sizes="(max-width: 640px) 50vw, 25vw"
-              className={`object-contain p-3 sm:p-4 transition-all duration-500 group-hover:scale-105 ${imgLoaded ? "opacity-100" : "opacity-0"} ${outOfStock ? "grayscale opacity-60" : ""}`}
+              className={`object-contain p-3 sm:p-4 transition-all duration-500 group-hover:scale-105 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
               loading="lazy"
               onLoad={() => setImgLoaded(true)}
             />
           </>
         ) : (
-          <div className={`absolute inset-0 flex items-center justify-center text-5xl text-gray-300 ${outOfStock ? "grayscale opacity-60" : ""}`}>
+          <div className="absolute inset-0 flex items-center justify-center text-5xl text-gray-300">
             📦
           </div>
         )}
 
-        {/* Overlay + badge agotado */}
+        {/* Badge agotado */}
         {outOfStock && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="bg-white/90 backdrop-blur-[2px] rounded-2xl px-4 py-2 shadow-sm border border-gray-200/80 flex flex-col items-center gap-0.5">
-              <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Agotado</span>
-            </div>
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2">
+            <span className="bg-gray-900/80 backdrop-blur-sm text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest whitespace-nowrap">
+              Agotado
+            </span>
           </div>
         )}
 
